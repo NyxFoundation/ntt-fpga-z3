@@ -1,0 +1,21 @@
+name: verify
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install z3-solver
+      - name: formal verification (must print VERIFIED)
+        run: python verify_radix2.py
+      - name: INTT halving finding (reproduce + validate fix)
+        run: python bug_intt_halving.py
+      - name: deep full-basis N=1024 round-trip
+        run: DEEP_VERIFY=1 python verify_radix2.py
