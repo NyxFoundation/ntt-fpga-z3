@@ -74,8 +74,8 @@ outputs of `compact_bf.v` through `modular_half`
 Both are combinational, so cycle counts are unchanged; with the patched
 butterfly, `INTT(NTT(x)) == x`.
 
-Reported upstream: see the issue tracker of
-[xiang-rc/cfntt_ref](https://github.com/xiang-rc/cfntt_ref/issues).
+Reported upstream:
+[xiang-rc/cfntt_ref#7](https://github.com/xiang-rc/cfntt_ref/issues/7).
 
 ## Scope
 
