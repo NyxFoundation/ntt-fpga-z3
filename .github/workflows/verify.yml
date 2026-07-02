@@ -9,13 +9,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install z3-solver
+      - uses: astral-sh/setup-uv@v5
       - name: formal verification (must print VERIFIED)
-        run: python verify_radix2.py
+        run: uv run verify_radix2.py
       - name: INTT halving finding (reproduce + validate fix)
-        run: python bug_intt_halving.py
+        run: uv run bug_intt_halving.py
+      - name: non-vacuity mutation tests
+        run: uv run mutation_test.py
       - name: deep full-basis N=1024 round-trip
-        run: DEEP_VERIFY=1 python verify_radix2.py
+        run: DEEP_VERIFY=1 uv run verify_radix2.py

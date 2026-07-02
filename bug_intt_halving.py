@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = []
+# ///
 """
 Reproduces the missing per-stage halving in the released radix-2 INTT
 butterfly (cfntt_ref/hardware_code_radix-2/compact_bf.v), and validates the

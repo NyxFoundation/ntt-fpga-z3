@@ -15,17 +15,20 @@ pinned `cfntt_ref` submodule; nothing is transcribed by hand.
 
 ## Quickstart
 
+Requires [uv](https://docs.astral.sh/uv/) — every script carries PEP 723
+inline metadata, so `uv run` provisions Python + z3 automatically:
+
 ```sh
 git clone --recurse-submodules https://github.com/NyxFoundation/ntt-fpga-z3.git
 cd ntt-fpga-z3
-pip install z3-solver
 
-python verify_radix2.py       # the full verification -> "VERIFIED"
-python bug_intt_halving.py    # the finding            -> "BUG REPRODUCED + FIX VALIDATED"
+uv run verify_radix2.py       # the full verification  -> "VERIFIED"
+uv run bug_intt_halving.py    # the finding            -> "BUG REPRODUCED + FIX VALIDATED"
+uv run mutation_test.py       # non-vacuity harness    -> "ALL MUTATIONS DETECTED"
 ```
 
-`DEEP_VERIFY=1 python verify_radix2.py` additionally runs the full-basis
-N=1024 round-trip.
+`DEEP_VERIFY=1 uv run verify_radix2.py` additionally runs the full-basis
+N=1024 round-trip. (No uv? `pip install z3-solver` and run with `python`.)
 
 ## What is verified (`verify_radix2.py`)
 
@@ -49,6 +52,11 @@ All checks pass — the arithmetic units, the conflict-free addressing scheme,
 the ROM contents, and the reference algorithm itself are correct. z3
 `unknown` is never accepted as a pass; every bit-vector obligation is
 bit-blasted to a decidable form.
+
+`mutation_test.py` guards against vacuous proofs: it injects four realistic
+bugs into the RTL model (wrong Barrett constant, swapped INTT subtraction
+operands, one corrupted ROM entry, wrong address stride) and asserts each
+mutant is killed with a concrete counterexample.
 
 ## The finding (`bug_intt_halving.py`)
 
@@ -89,6 +97,7 @@ Reported upstream:
 ```
 verify_radix2.py      the formal verification (z3 + exhaustive/basis checks)
 bug_intt_halving.py   the INTT halving finding: reproduction + fix validation
+mutation_test.py      non-vacuity harness (4 injected bugs, all must be killed)
 cfntt_ref/            git submodule -> xiang-rc/cfntt_ref @ 8373a66 (ground truth)
 ```
 

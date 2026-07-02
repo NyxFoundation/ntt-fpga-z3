@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = [
+#     "z3-solver",
+# ]
+# ///
 """
 Formal verification of the CFNTT Radix-2 NTT multiplication accelerator
 (Chen et al., IACR TCHES 2022(1):94-126; reference repo xiang-rc/cfntt_ref).
