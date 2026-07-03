@@ -64,6 +64,10 @@ repo's CI or scripts.
   dominate).  So the shipped core gets 3->1 DSP + bug fix + -50% twiddle
   bits at ~1% Fmax cost.  Remaining: cycle-accurate FSM for a functional
   timed run + optional Vivado confirmation.
+- PDF render QA: fixed the positioning table overflowing the page (11->7
+  cols; the 3 rightmost columns were silently clipped off-page), and cleared
+  stale "Fmax needs Vivado/future work" lines in Sec 7 that contradicted the
+  measured Fmax paragraph.  Full PDF builds clean (9pp, xelatex).
 - KEY INFRA FINDING: Vivado is NOT required for routed Fmax — openXC7
   toolchain-nix (pin tag 0.8.2) gives it fully in nix.
 - Dockerfile + CITATION.cff + docs/artifact.md: DONE; Zenodo DOI = at release.

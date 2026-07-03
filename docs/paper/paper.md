@@ -313,9 +313,10 @@ construction subsumes the special case.
 
 # 7. Evaluation
 
-We give both technology-independent (generic gates) and FPGA-primitive
-(`yosys synth_xilinx`, 7-series) counts; the latter is what the claims rest
-on. Fmax and BRAM inference need Vivado and are future work (§9).
+We give technology-independent (generic gates), FPGA-primitive
+(`yosys synth_xilinx`, 7-series) *and* post-route (openXC7 `nextpnr-xilinx`,
+xc7a100t) counts; the latter two are what the claims rest on. Only
+block-RAM inference and vendor (Vivado) confirmation remain open (§9).
 
 **FPGA primitives (Artix-7 target).**
 
@@ -348,7 +349,8 @@ delay). The ψ-fold's real cost is **depth on the derived-half ROM read**
 (LTP 26 vs 7 for a plain lookup): a logic-depth analysis drove a redesign of
 `fold7` from three chained conditional subtractions to six parallel
 comparators + one subtraction (LTP 31 → 26, LUT 214→192, still DSP-free,
-re-verified). Fmax needs PnR (§9); a pipelined fold7 removes the ROM-read
+re-verified). The measured Fmax cost is small (§7 Fmax paragraph); a
+pipelined fold7 would remove the ROM-read
 depth at +1 latency.
 
 **Whole-core area.** Synthesizing the entire core (one butterfly + two
@@ -366,7 +368,7 @@ saving), and **RAMB18 unchanged** — the two BRAMs are the data banks; both
 twiddle ROMs map to distributed LUT-ROM, so the ψ-fold's −50% stored bits
 does not cut BRAM count at N=1024 (it would at larger N or a forced
 block-RAM ROM). This uses the reconstructed FSM to elaborate for synthesis
-(area only; Fmax needs PnR, §9).
+(area here; whole-core Fmax is measured separately below).
 
 **Post-route Fmax (open flow, no Vivado).** Using openXC7's
 `nextpnr-xilinx` + artix7 chipdb on xc7a100t, register-wrapped modules,
@@ -391,15 +393,20 @@ twiddle bits at ≈1% Fmax cost.
 target q = 12289 and *both use Barrett with full twiddle ROMs* — neither of
 our contributions appears in them:
 
-| design | reduction | mult/bf | LUT | FF | DSP | BRAM | Fmax | NTT-1024 | ENS† | verified? |
-|---|---|---|---|---|---|---|---|---|---|---|
-| CFNTT `[cfntt]` (base, our flow) | Barrett | 3 | 784 | 582 | 3 | 2 | ~137 MHz | 5120 CC / 37.4 µs | 969 | no (§3 bug) |
-| **this work** (same flow) | **K-RED** | **1** | 824 | 502 | **1** | 2 | ~136 MHz | 5120 CC / 37.6 µs | **769** | **yes** |
-| Compact-FALCON `[compactfalcon2025]` (cited) | Barrett | — | 17395 | 7950 | 20 | 4 | 134 MHz | 640 CC / 4.78 µs | 8142 | no |
+| design | mult/bf | DSP | Fmax | NTT-1024 | ENS† | verified |
+|---|---|---|---|---|---|---|
+| CFNTT (base, our flow) | 3 | 3 | ~137 MHz | 5120 CC / 37.4 µs | 969 | no |
+| **this work** (same flow) | **1** | **1** | ~136 MHz | 5120 CC / 37.6 µs | **769** | **yes** |
+| Compact-FALCON | — | 20 | 134 MHz | 640 CC / 4.78 µs | 8142 | no |
+
+(Designs cited in §8: CFNTT `[cfntt]`, Compact-FALCON `[compactfalcon2025]`;
+the base's `no` is the §3 inverse-transform bug.)
 
 †ENS = LUT/4 + FF/8 + BRAM×200 + DSP×100 (Compact-FALCON's own normalized
-area metric). All three on Artix-7 xc7a100t; ours/base measured in the open
-flow (§7), Compact-FALCON as reported.
+area metric), summarizing the full LUT/FF/DSP/BRAM (ours vs base tabulated in
+§7). All on Artix-7 xc7a100t; ours/base measured in the open flow (§7),
+Compact-FALCON as reported. Compact-FALCON is a *combined FFT+NTT*
+accelerator (17395 LUT / 7950 FF / 20 DSP / 4 BRAM), hence its far larger ENS.
 
 Two honest comparisons. **Against the base** (same architecture, our retrofit
 target, same flow) the move is clean and rigorous: **ENS −21% (969→769)**,
