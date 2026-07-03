@@ -143,21 +143,42 @@ depth from the ROM read entirely at +1 latency; we keep the combinational
 version to preserve the drop-in 1-cycle ROM interface, and flag the
 depth/latency trade for PnR.
 
-### Vivado PnR (still TODO for Fmax + BRAM inference)
+### Post-route Fmax (open flow, NO Vivado) — `proposed/pnr/fmax.sh`
 
-The open flow gives LUT/FF/DSP/CARRY but not **Fmax** and won't infer BRAM
-the way Vivado does. Vivado numbers on the CFNTT part (Artix-7), v1 vs v2,
-remain the camera-ready item — to (a) confirm fold7 closes timing on the ROM
-path, (b) check the K-RED carry chains don't lengthen the critical path vs
-Barrett, (c) get the BRAM story right for a BRAM-mapped ROM. Setup for
-Vivado-on-NixOS is in `docs/vivado-nixos.md`. Whole-core numbers still need
-the FSM reconstruction (§sim caveat).
+We DID get routed Fmax without Vivado, via **openXC7's `nextpnr-xilinx`**
+(pin the working tag `github:openXC7/toolchain-nix/0.8.2`; HEAD's flake is
+broken) with the artix7 chipdb, on **xc7a100t**. Each module is
+register-wrapped (`proposed/pnr/wrap.py`: all inputs from an internal shift
+register, outputs registered + XOR-reduced, so only clk + 2 pins are I/O)
+to time the true register-to-register critical path; best of 3 placer seeds:
 
-## Reproducibility
+| module | Fmax (xc7a100t) |
+|---|---|
+| `modular_mul` (Barrett, 3 DSP) | ~233 MHz |
+| `modular_mul_kred` (K-RED, 1 DSP) | ~230 MHz |
+| `compact_bf` (reference — INTT-buggy) | ~164 MHz |
+| `compact_bf_v2` (K-RED, INTT-correct) | ~122 MHz |
 
-Every number above regenerates from the public repo:
-- `proposed/run_all.sh` — all module proofs + audits + mutation sweep
-- `proposed/fullcore/run_stream.py` — the system-level simulation
-- `proposed/fpga_cost.sh` / `proposed/fpga_cost_core.sh` — per-module &
-  whole-core FPGA-primitive costs (yosys synth_xilinx)
-CI (`.github/workflows/verify.yml`) runs the proof/audit/sim suite on every push.
+Honest reading — this is the number real PnR was needed for:
+
+1. **At the multiplier, K-RED is Fmax-neutral vs Barrett** (~230 vs ~233
+   MHz, within seed noise). So dropping 3→1 DSP costs **no clock speed** —
+   a clean win at the unit that matters for the DSP budget.
+2. **At the butterfly, the proposed core is slower** (~122 vs ~164 MHz,
+   −26%). Two causes, stated honestly: (a) the reference butterfly is
+   partly faster *because it is the buggy one* — it omits the per-stage
+   `op21` halving (§3), so a *correct* reference would also pay for those
+   gates; (b) the K-RED fold + fused-op21 logic lengthens the butterfly
+   critical path vs a single DSP multiply.
+3. **Net**: the ψ-fold/K-RED design trades **DSP and twiddle-storage for
+   clock frequency** at the butterfly. On the usual **DSP- or memory-bound**
+   NTT accelerator (many parallel butterflies exhausting DSP48/BRAM), that
+   is the right trade — you fit more butterflies / free DSPs; if the design
+   is Fmax-bound, Barrett's DSP path is faster. We report the tradeoff, not
+   a one-sided win.
+
+A pipelined K-RED / fold7 (one extra register each) would recover much of
+the butterfly Fmax at +1–2 cycles latency — a concrete follow-up. Vendor
+(Vivado) numbers would confirm these open-flow figures but are not required
+for the conclusion. Whole-core Fmax additionally needs the cycle-accurate
+FSM (see fullcore/README).

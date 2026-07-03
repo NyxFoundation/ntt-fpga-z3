@@ -52,9 +52,16 @@ repo's CI or scripts.
   twiddle ROMs + Barrett NTT reduction, xc7a100t @134MHz.  Neither of our
   contributions overlaps it; strengthens novelty (latest Falcon-NTT still
   full-ROM + Barrett).
-- Whole-core AREA (LUT/FF/DSP/BRAM): DONE via open flow
-  (proposed/fpga_cost_core.sh): DSP 3->1, FF -14%, LUT +5%, BRAM unchanged.
-  Only Fmax remains (needs Vivado PnR + cycle-accurate FSM).
+- Whole-core AREA: DONE (proposed/fpga_cost_core.sh): DSP 3->1, FF -14%,
+  LUT +5%, BRAM unchanged.
+- Post-route Fmax: DONE without Vivado (openXC7 nextpnr-xilinx on xc7a100t,
+  proposed/pnr/fmax.sh): multiplier Fmax-NEUTRAL (K-RED ~230 vs Barrett
+  ~233 MHz -> 3->1 DSP for free); butterfly ~122 vs ~164 MHz (-26%, partly
+  the cost of the #7 correctness fix). Honest DSP/memory-for-Fmax tradeoff
+  now in paper Sec 7/9 + abstract.  Remaining: whole-core Fmax (needs
+  cycle-accurate FSM) + optional Vivado confirmation.
+- KEY INFRA FINDING: Vivado is NOT required for routed Fmax — openXC7
+  toolchain-nix (pin tag 0.8.2) gives it fully in nix.
 - Dockerfile + CITATION.cff + docs/artifact.md: DONE; Zenodo DOI = at release.
 - FPGA-primitive cost table (open flow, proposed/fpga_cost.sh): DONE; corrected
   the ROM claim (−79% was generic gates; FPGA distributed-ROM is −11% LUT /

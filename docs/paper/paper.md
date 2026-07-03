@@ -23,7 +23,10 @@ abstract: |
   Proth NTT prime; we validate Kyber / ML-KEM (q = 3329) exhaustively as a
   second instance. On Artix-7 primitives: 3→1 DSP48 per butterfly and −27%
   FF on the multiplier (trading DSPs for LUT/carry logic), the butterfly
-  becoming inverse-correct; the twiddle ROM stores −50% bits.
+  becoming inverse-correct; the twiddle ROM stores −50% bits. Post-route
+  Fmax (openXC7, xc7a100t) shows the K-RED multiplier is Fmax-neutral vs
+  Barrett (~230 MHz), while the corrected butterfly trades ~26% clock for the
+  DSP/memory savings — the right trade on DSP-/memory-bound designs.
 ---
 
 <!-- Working draft (Phase 7). Numbers and claims trace to docs/*.md and the
@@ -359,6 +362,20 @@ does not cut BRAM count at N=1024 (it would at larger N or a forced
 block-RAM ROM). This uses the reconstructed FSM to elaborate for synthesis
 (area only; Fmax needs PnR, §9).
 
+**Post-route Fmax (open flow, no Vivado).** Using openXC7's
+`nextpnr-xilinx` + artix7 chipdb on xc7a100t, register-wrapped modules,
+best of 3 seeds: `modular_mul` (Barrett) ~233 MHz vs `modular_mul_kred`
+~230 MHz — **the K-RED multiplier is Fmax-neutral, so 3→1 DSP costs no clock
+speed**; `compact_bf` (reference) ~164 MHz vs `compact_bf_v2` ~122 MHz
+(−26%). We read the butterfly gap honestly: the reference is partly faster
+*because it is the buggy version* (it omits the §3 halving, so a correct
+reference also pays for those gates), and the K-RED+op21 logic lengthens the
+critical path vs a single DSP multiply. Net, the design trades DSP and
+twiddle-memory for butterfly Fmax — the right trade on the DSP-/memory-bound
+accelerators these actually are, and a pipelined fold recovers most of it at
++1 latency. (Vendor Vivado numbers would confirm but are not needed for this
+conclusion.)
+
 **Positioning vs Falcon-NTT accelerators.** The two closest designs both
 target q = 12289 and *both use Barrett with full twiddle ROMs* — neither of
 our contributions appears in them:
@@ -419,11 +436,12 @@ design driver.
 
 # 9. Limitations and future work
 
-Whole-core **area** (LUT/FF/DSP/BRAM) is now measured via the open flow
-(§7); the remaining hardware gap is **Fmax**, which needs Vivado PnR on the
-CFNTT Artix-7 part (v1 vs v2) — the reconstructed FSM elaborates for
-synthesis but is not yet cycle-accurate, so a *timed* whole-core run (and
-thus routed Fmax) is still open. Generic ψ-fold RTL emission and per-prime
+Whole-core **area** (LUT/FF/DSP/BRAM) and per-module **post-route Fmax** are
+both now measured via the open flow (§7, openXC7 nextpnr-xilinx on
+xc7a100t). The remaining hardware gaps are (a) *whole-core* Fmax, which needs
+the cycle-accurate FSM (the reconstructed one elaborates for area/synthesis
+but is not yet cycle-exact for a timed run), and (b) optional vendor (Vivado)
+confirmation of the open-flow figures. Generic ψ-fold RTL emission and per-prime
 SymbiYosys generation are templated but not yet automatic. The
 visual-discovery provenance is reported, not evaluated (no ablation of the
 agent loop).

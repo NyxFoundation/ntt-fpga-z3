@@ -8,3 +8,5 @@ fullcore/run_*/
 fullcore/*.vcd
 generator/sim_*
 generator/ky_*.hex
+proposed/pnr/*.json
+proposed/pnr/*.xdc
