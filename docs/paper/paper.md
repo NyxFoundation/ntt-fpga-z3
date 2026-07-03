@@ -541,10 +541,26 @@ number is reproducible from the public repository's CI.
 
 # Reproducibility
 
-All artifacts, proofs and the derivation history are public at
-`github.com/NyxFoundation/ntt-fpga-z3`; `proposed/run_all.sh` and the CI
-workflow regenerate every claim. [TODO: Zenodo DOI + Dockerfile for artifact
-evaluation.]
+Everything in this paper is public and CI-checked at
+`github.com/NyxFoundation/ntt-fpga-z3` (the retrofitted RTL, the reference
+CFNTT as a submodule, all proofs, the generator, the FPGA flow, and the
+derivation history). Each class of claim has a one-command reproduction, and
+the GitHub Actions workflow reruns all of them on every push:
+
+- **Functional verification** — `proposed/run_all.sh`: the exact-width z3
+  proofs (K-RED unit, fold7, generalization), the SymbiYosys proofs
+  (butterfly miter, ROM equivalence, reset/CDC, mutation non-vacuity), and
+  the iverilog full-transform round-trip.
+- **Area** (§7) — `proposed/fpga_cost.sh` (per module) and
+  `fpga_cost_core.sh` (whole core), via `yosys synth_xilinx`.
+- **Post-route Fmax** (§7) — `proposed/pnr/fmax.sh` and `fmax_core.sh`, via
+  **openXC7** `nextpnr-xilinx` on Artix-7 `xc7a100t` (pin the working tag
+  `github:openXC7/toolchain-nix/0.8.2`); no Vivado, no vendor download.
+
+A `Dockerfile` pins the whole toolchain for artifact evaluation; a Zenodo DOI
+will be minted from the tagged release. The single source for this paper
+(`docs/paper/paper.md`) builds to both a single-column PDF and a two-column
+IEEE draft (`docs/paper/Makefile`, `docs/paper/ieee/`).
 
 # References
 

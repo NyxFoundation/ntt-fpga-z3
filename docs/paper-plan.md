@@ -78,6 +78,10 @@ repo's CI or scripts.
   LaTeX math -> the IEEE 2-col build now compiles with ZERO errors and ZERO
   overfull boxes (and both builds read better).  IEEE build is submission-
   clean; only \cite{} wiring + venue class remain (mechanical).
+- Reproducibility section upgraded from a 2-line stub to a concrete artifact
+  statement: per-claim one-command reproduction (run_all.sh / fpga_cost*.sh /
+  pnr/fmax*.sh), all CI-checked, all referenced scripts verified to exist,
+  Docker + Zenodo-on-release noted.  Leverages the paper core strength.
 - KEY INFRA FINDING: Vivado is NOT required for routed Fmax — openXC7
   toolchain-nix (pin tag 0.8.2) gives it fully in nix.
 - Dockerfile + CITATION.cff + docs/artifact.md: DONE; Zenodo DOI = at release.
