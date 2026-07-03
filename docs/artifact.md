@@ -52,3 +52,19 @@ pip-provided z3 wheel loads.
 Create a Zenodo record from the GitHub release (Zenodo↔GitHub integration),
 which mints a DOI for the exact tagged commit; add the DOI badge here and to
 the paper's Reproducibility section. `CITATION.cff` provides the metadata.
+
+## Integrity check (2026-07-03)
+
+Full reproducibility chain re-run green, and every FPGA number in the paper
+verified equal to the live script output:
+
+- z3 / math: `verify_radix2.py` VERIFIED; `kred_math`, `verify_kred`,
+  `rom_fold_math`, `verify_rom_fold`, `kred_gen` all PASS/VALIDATED.
+- RTL: `fv_kred.sby` (rst) PASS, `fv_rom_fold.sby` (bmc) PASS.
+- Simulation: `run_stream.py` STREAM SIM PASS; `gen_check.py` (Kyber RTL)
+  PASS; `gen_rom_fold.py` regenerates IN SYNC.
+- Cost: `fpga_cost.sh` / `fpga_cost_core.sh` outputs match paper §7 exactly
+  (modular_mul 29/101/3, kred 83/74/1; tf_ROM 241, fold 192; whole core
+  ref 784/582/3/2, proposed 824/502/1/2).
+
+The paper is internally consistent and fully reproducible from this repo.
