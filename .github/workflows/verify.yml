@@ -32,6 +32,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y iverilog
       - name: proposed full-transform RTL simulation (iverilog)
         run: uv run proposed/fullcore/run_stream.py
+      - name: generalization — Proth-prime generator (Falcon + Kyber)
+        run: uv run proposed/generator/kred_gen.py
+      - name: generalization — generated Kyber RTL under iverilog
+        run: uv run proposed/generator/gen_check.py
   yosys-formal:
     runs-on: ubuntu-latest
     steps:

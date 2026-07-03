@@ -6,3 +6,5 @@ audit_bf2_const.v
 fullcore/sim_*
 fullcore/run_*/
 fullcore/*.vcd
+generator/sim_*
+generator/ky_*.hex
