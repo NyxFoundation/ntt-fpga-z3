@@ -31,8 +31,12 @@ abstract: |
   twiddle bits at ≈1% Fmax cost.
 ---
 
-<!-- Working draft (Phase 7). Numbers and claims trace to docs/*.md and the
-     repository's CI-reproducible scripts. TODOs are marked inline. -->
+<!-- Complete draft. Every number and claim traces to a CI-reproducible
+     script (see the Reproducibility section). Builds to a single-column PDF
+     (Makefile) and a two-column IEEE draft (ieee/), both clean. Remaining
+     before a specific venue: \cite{} wiring against references.bib and the
+     venue's class/page limit; a few references.bib entries carry
+     [verify at camera-ready] notes for paywalled venue metadata. -->
 
 # 1. Introduction
 
