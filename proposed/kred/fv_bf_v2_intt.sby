@@ -22,4 +22,4 @@ fv_bf_v2.sv
 golden_v2.vh
 compact_bf_v2.v
 abstract_units_v2.v
-../cfntt_ref/hardware_code_radix-2/common_lib.v
+../../cfntt_ref/hardware_code_radix-2/common_lib.v

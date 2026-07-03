@@ -45,7 +45,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def load_w():
-    rom_v = os.path.join(_HERE, "..", "cfntt_ref",
+    rom_v = os.path.join(_HERE, "..", "..", "cfntt_ref",
                          "hardware_code_radix-2", "tf_ROM.v")
     if not os.path.exists(rom_v):
         print("FAIL: cfntt_ref submodule missing")

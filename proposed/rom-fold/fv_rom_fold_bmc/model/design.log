@@ -960,6 +960,6 @@ Module fv_rom_fold directly or indirectly contains formal properties -> setting 
 7. Executing RTLIL backend.
 Output filename: ../model/design.il
 
-End of script. Logfile hash: 707dbaf9cd, CPU: user 10.96s system 0.01s, MEM: 38.86 MB peak
+End of script. Logfile hash: 707dbaf9cd, CPU: user 11.01s system 0.01s, MEM: 39.01 MB peak
 Yosys 0.62 (git sha1 v0.62, g++ 15.2.0 -fPIC -O3)
 Time spent: 98% 2x opt_reduce (10 sec), 0% 2x opt_muxtree (0 sec), ...

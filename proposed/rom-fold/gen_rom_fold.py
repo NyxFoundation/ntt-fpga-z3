@@ -22,7 +22,7 @@ Q = 12289
 INV9 = pow(9, -1, Q)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-rom_v = open(os.path.join(HERE, "..", "cfntt_ref",
+rom_v = open(os.path.join(HERE, "..", "..", "cfntt_ref",
                           "hardware_code_radix-2", "tf_ROM.v")).read()
 entries = {int(a): int(v) for a, v in
            re.findall(r"10'd(\d+):\s*Q\s*<=\s*14'd(\d+);", rom_v)}

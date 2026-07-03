@@ -1,4 +1,3 @@
-fv_kred/
-fv_kred_*/
-fv_bf_v2_*/
-fv_kred_run.log
+fv_*/
+*_run.log
+audit_out.json

@@ -63,7 +63,7 @@ def op21(a):
 
 
 def load_w_rom():
-    rom_v = os.path.join(_REPO, "..", "cfntt_ref",
+    rom_v = os.path.join(_REPO, "..", "..", "cfntt_ref",
                          "hardware_code_radix-2", "tf_ROM.v")
     if not os.path.exists(rom_v):
         print("FAIL: cfntt_ref submodule missing")

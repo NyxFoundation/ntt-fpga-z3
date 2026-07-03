@@ -9,6 +9,6 @@
 ##   0:00:00  Checking assertions in step 3..
 ##   0:00:02  Checking assumptions in step 4..
 ##   0:00:02  Checking assertions in step 4..
-##   0:00:06  Checking assumptions in step 5..
-##   0:00:06  Checking assertions in step 5..
+##   0:00:07  Checking assumptions in step 5..
+##   0:00:07  Checking assertions in step 5..
 ##   0:00:13  Status: passed

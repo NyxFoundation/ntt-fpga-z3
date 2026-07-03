@@ -146,6 +146,6 @@ Creating SMT-LIBv2 representation of module tf_rom_fold.
 Creating SMT-LIBv2 representation of module tf_ROM.
 Creating SMT-LIBv2 representation of module fv_rom_fold.
 
-End of script. Logfile hash: e3acffb6a6, CPU: user 0.02s system 0.01s, MEM: 30.24 MB peak
+End of script. Logfile hash: e3acffb6a6, CPU: user 0.02s system 0.00s, MEM: 30.21 MB peak
 Yosys 0.62 (git sha1 v0.62, g++ 15.2.0 -fPIC -O3)
-Time spent: 68% 2x write_smt2 (0 sec), 25% 2x read_rtlil (0 sec), ...
+Time spent: 68% 2x write_smt2 (0 sec), 24% 2x read_rtlil (0 sec), ...

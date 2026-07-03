@@ -152,7 +152,8 @@ verify_radix2.py      the z3 verification (exact gate models + basis checks)
 bug_intt_halving.py   the INTT halving finding: reproduction + fix validation
 mutation_test.py      non-vacuity harness (4 injected bugs, all must be killed)
 yosys/                RTL-level suite: SymbiYosys harnesses, LEC, audits
-proposed/             CFNTT-KRED: verified 1-multiplier, bug-fixed butterfly
+proposed/kred/        invention 1: CFNTT-KRED 1-multiplier, bug-fixed butterfly
+proposed/rom-fold/    invention 2: psi-fold twiddle ROM (visually discovered)
 cfntt_ref/            git submodule -> xiang-rc/cfntt_ref @ 8373a66 (ground truth)
 ```
 

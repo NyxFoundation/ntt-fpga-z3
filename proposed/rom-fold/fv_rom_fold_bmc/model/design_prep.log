@@ -88,6 +88,6 @@ Finding unused cells or wires in module \tf_rom_fold..
 13. Executing RTLIL backend.
 Output filename: ../model/design_prep.il
 
-End of script. Logfile hash: 89b4ba869b, CPU: user 0.06s system 0.01s, MEM: 32.94 MB peak
+End of script. Logfile hash: 89b4ba869b, CPU: user 0.06s system 0.00s, MEM: 32.92 MB peak
 Yosys 0.62 (git sha1 v0.62, g++ 15.2.0 -fPIC -O3)
 Time spent: 27% 4x opt_clean (0 sec), 24% 1x opt_merge (0 sec), ...

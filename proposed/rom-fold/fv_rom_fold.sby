@@ -19,4 +19,4 @@ prep -top fv_rom_fold
 [files]
 fv_rom_fold.sv
 tf_rom_fold.v
-../cfntt_ref/hardware_code_radix-2/tf_ROM.v
+../../cfntt_ref/hardware_code_radix-2/tf_ROM.v

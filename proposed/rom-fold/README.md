@@ -1,0 +1,102 @@
+# psi-fold twiddle ROM — half the stored words, zero multipliers
+
+Invention #2 of the loop — and the one **found by visually reviewing the 3D
+architecture model**: after CFNTT-KRED shrank the arithmetic, the rendered
+floorplan showed the 1023-word twiddle ROM as the largest block left,
+sitting right next to two visual precedents — the K-RED fold stages
+(shift-add constant multiplies are ~free) and the op21 gate on the ROM
+output (deriving a twiddle variant from a stored word already pays once).
+This module applies that pattern to the ROM itself.
+
+## The algorithm
+
+### 1. The hidden symmetry of the bit-reversed table
+
+CFNTT stores its negacyclic twiddles in bit-reversed order:
+
+```
+w_rom[i] = ψ^bitrev₁₀(i)   (mod q),    ψ = kesai = 7,  q = 12289
+```
+
+For an index in the upper half, `512 + j` (j < 512), bit 9 is set — and in
+the bit-reversed exponent that bit lands at position **0**:
+
+```
+bitrev₁₀(512 + j) = 2·bitrev₉(j) + 1 = bitrev₁₀(j) + 1
+```
+
+so the whole upper half is one ψ away from the lower half:
+
+```
+w_rom[512 + j] = ψ^(bitrev(j)+1) = 7 · w_rom[j]   (mod q)   for ALL j < 512
+```
+
+(verified against every entry of the shipped `tf_ROM.v`).
+
+### 2. ×7 is free on a Proth prime
+
+ψ = 7 makes the derivation a shift-and-subtract:
+
+```
+7x = (x << 3) − x          < 7q < 2¹⁷  for x < q
+```
+
+followed by three conditional subtractions (−4q, −2q, −q) to land in
+`[0, q)`. No multiplier, four narrow adders — the `fold7` gate.
+
+### 3. The folded ROM
+
+`tf_rom_fold.v` keeps `tf_ROM.v`'s exact interface and 1-cycle latency:
+
+```
+i = A + 1                            (address semantics of tf_ROM)
+base  = ROM512[i mod 512]            512 stored words = 9⁻¹·w_rom[0..511]
+Q_out = i ≥ 512 ? fold7(base) : base
+```
+
+The stored words are 9⁻¹-scaled because the unit composes with the
+CFNTT-KRED butterfly ([`../kred/`](../kred/)) — constant scalings commute
+with the fold, so the same trick works unscaled for the original design.
+
+### 4. It recurses
+
+Each halving level costs one more fold7 in the chain:
+
+```
+w[256 + j] = 49·w[j]  = fold7²    → 256-word ROM (−75% bits), ≤ 3 chained folds
+w[128 + j] = 7⁴·w[j]  = fold7⁴    → …
+```
+
+The 512-word (1-level) point is the shipped RTL; the 256-word variant is
+validated end-to-end in `rom_fold_math.py`.
+
+## Files
+
+| File | Role |
+|---|---|
+| `gen_rom_fold.py` | generates `tf_rom_fold.v` MECHANICALLY from the shipped `tf_ROM.v` — no table is ever hand-transcribed (CI regenerates and diffs) |
+| `tf_rom_fold.v` | the folded ROM RTL (generated; drop-in for `tf_ROM.v`) |
+| `rom_fold_math.py` | fold relations at levels 1–3 against the REAL table; `fold7` exhaustive over the full domain; 9⁻¹ composition; e2e round-trips with 512- and 256-word ROMs |
+| `verify_rom_fold.py` | z3, full domain, divider-free: `t0 == 7x` fits 17 bits; congruence `7x == t3 + q·(4s₁+2s₂+s₃)`; `t3 < q` |
+| `fv_rom_fold.sv/.sby` | SymbiYosys miter: `tf_rom_fold` ≡ the SHIPPED `tf_ROM.v` at **every address** (via `9·Q_new ≡ Q_ref mod q`), 1-cycle latency preserved |
+
+## Results
+
+| | `tf_ROM.v` | `tf_rom_fold.v` |
+|---|---|---|
+| stored words | 1023 | **512** (−50%; 256 possible) |
+| stored bits | 14322 | **7168** |
+| cells (yosys generic synth, flattened) | 7828 | **1611 (−79%)** |
+| extra logic | — | 1 fold7 gate (4 narrow adders) |
+| interface / latency | 1-cycle registered | identical |
+
+## Honesty notes
+
+- On-the-fly / compressed twiddle generation is a known family of
+  techniques in FFT/NTT hardware. The contribution here is the specific
+  **bit-reversed half-fold via ψ with a Proth-prime shift-sub multiplier**,
+  composed with the 9⁻¹ K-RED scaling, and **proven equivalent to the
+  shipped ROM at every address** rather than re-derived from the spec.
+- The fold sits combinationally after the ROM register; it adds gate delay
+  on the w path, which has two registers of slack in `compact_bf` — timing
+  closure is expected but place-and-route is out of scope here.

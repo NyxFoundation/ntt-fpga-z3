@@ -19,15 +19,15 @@ jobs:
       - name: deep full-basis N=1024 round-trip
         run: DEEP_VERIFY=1 uv run verify_radix2.py
       - name: proposed CFNTT-KRED — bit-exact math + e2e polymult
-        run: uv run proposed/kred_math.py
+        run: uv run proposed/kred/kred_math.py
       - name: proposed CFNTT-KRED — z3 full-domain reduction proof
-        run: uv run proposed/verify_kred.py
+        run: uv run proposed/kred/verify_kred.py
       - name: proposed psi-fold ROM — math + e2e
-        run: uv run proposed/rom_fold_math.py
+        run: uv run proposed/rom-fold/rom_fold_math.py
       - name: proposed psi-fold ROM — z3 fold proof
-        run: uv run proposed/verify_rom_fold.py
+        run: uv run proposed/rom-fold/verify_rom_fold.py
       - name: proposed psi-fold ROM — generated RTL in sync
-        run: uv run proposed/gen_rom_fold.py && git diff --exit-code proposed/tf_rom_fold.v
+        run: uv run proposed/rom-fold/gen_rom_fold.py && git diff --exit-code proposed/rom-fold/tf_rom_fold.v
   yosys-formal:
     runs-on: ubuntu-latest
     steps:
@@ -39,9 +39,10 @@ jobs:
         run: MODE=bmc yosys/run_all.sh
       - name: proposed CFNTT-KRED — RTL proofs (SymbiYosys)
         run: |
-          cd proposed
+          cd proposed/kred
           sby -f fv_kred.sby bmc
           sby -f fv_kred.sby rst
           sby -f fv_bf_v2_ntt.sby bmc
           sby -f fv_bf_v2_intt.sby bmc
+          cd ../rom-fold
           sby -f fv_rom_fold.sby bmc
