@@ -30,6 +30,11 @@ repo's CI or scripts.
   no missing glyphs) + build README; CI generates the LaTeX skeleton on every
   push.  Citekeys are readable markers -> \cite{} at venue conversion.
 - Sec 5 verification-summary table (Table 1) added.
+- Editorial QA pass: reconciled the fold7-redesign numbers everywhere
+  (ROM LUT 214->192 / -11%->-20% was stale in the prose + evaluation.md
+  table after the parallel-reduction fold7); fixed 3 stale section refs
+  (future-work was §8 pre-Related-Work-insertion, now §9); FF %s re-checked
+  (mult -27%, core -14%, ROM -20% all consistent with the scripts).
 - FSM reconstruction: partial progress — traced the datapath, fixed the
   write latency (8->10, pipe[9]) to remove X-corruption; result now
   well-defined but not yet cycle-accurate (twiddle/network alignment).

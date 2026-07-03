@@ -306,7 +306,7 @@ construction subsumes the special case.
 
 We give both technology-independent (generic gates) and FPGA-primitive
 (`yosys synth_xilinx`, 7-series) counts; the latter is what the claims rest
-on. Fmax and BRAM inference need Vivado and are future work (§8).
+on. Fmax and BRAM inference need Vivado and are future work (§9).
 
 **FPGA primitives (Artix-7 target).**
 
@@ -328,8 +328,8 @@ Reading the numbers honestly:
   on the usual DSP-bound design, roughly neutral on a LUT-bound one. We
   state both.
 - **The twiddle ROM's win on FPGA is the −50% stored bits**, not a −79%
-  logic cut: mapped to distributed LUT-ROM at N=1024 the fold saves only
-  ≈−11% LUT (fold7 adds logic); the stored-bit halving converts to a BRAM
+  logic cut: mapped to distributed LUT-ROM at N=1024 the fold saves
+  ≈−20% LUT (241→192; fold7 adds logic); the stored-bit halving converts to a BRAM
   saving when the table is BRAM-mapped (larger N, or forced). The
   generic-gate count (−79%) overstates the distributed-ROM FPGA benefit.
 
@@ -339,7 +339,7 @@ delay). The ψ-fold's real cost is **depth on the derived-half ROM read**
 (LTP 26 vs 7 for a plain lookup): a logic-depth analysis drove a redesign of
 `fold7` from three chained conditional subtractions to six parallel
 comparators + one subtraction (LTP 31 → 26, LUT 214→192, still DSP-free,
-re-verified). Fmax needs PnR (§8); a pipelined fold7 removes the ROM-read
+re-verified). Fmax needs PnR (§9); a pipelined fold7 removes the ROM-read
 depth at +1 latency.
 
 **Whole-core area.** Synthesizing the entire core (one butterfly + two
@@ -370,7 +370,7 @@ our contributions appears in them:
 | **this work** | **K-RED, 1 mult** | **ψ-fold, ½ words** | **1** | **yes (SMT+SbY+sim)** |
 
 We do not claim a head-to-head Fmax/throughput win — that needs the whole-core
-PnR (§8). The claim is *fewer multipliers and half the twiddle storage, at
+PnR (§9). The claim is *fewer multipliers and half the twiddle storage, at
 equal function, on a verified and bug-fixed drop-in* — a Pareto move on the
 resource axes NTT accelerators are actually bound by (DSP, twiddle memory),
 against designs that had neither optimization.

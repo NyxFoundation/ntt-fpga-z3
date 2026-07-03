@@ -52,7 +52,7 @@ resolved by mapping to real 7-series primitives. Per module, flattened
 | `compact_bf` (ref) | 158 | 297 | **3** | 24 |
 | `compact_bf_v2` | 231 | 270 | **1** | 46 |
 | `tf_ROM` | 241 | 14 | 0 | 0 |
-| `tf_rom_fold` | 214 | 15 | 0 | 23 |
+| `tf_rom_fold` | 192 | 15 | 0 | 18 |
 
 Honest reading (this is why per-FPGA numbers matter):
 
@@ -67,11 +67,11 @@ Honest reading (this is why per-FPGA numbers matter):
    rather than only the favourable one.
 3. **The ROM's −79% was generic gates, not FPGA.** Mapped to primitives the
    ROM stays in distributed LUT-RAM (yosys does not infer BRAM for
-   1023×14 here), so `tf_rom_fold` is only **−11% LUT** (241 → 214), with
+   1023×14 here), so `tf_rom_fold` is only **−20% LUT** (241 → 192), with
    fold7 adding CARRY4. The real, defensible ROM claim is the **−50% stored
    bits**, which converts to a BRAM saving only when the table is large
    enough to be BRAM-mapped (bigger N, or a forced `ram_style="block"`);
-   at Falcon's N=1024 as distributed ROM the LUT win is modest. We correct
+   at Falcon's N=1024 as distributed ROM the LUT win is real but small. We correct
    the paper accordingly.
 
 ### Whole-core area (open flow, `proposed/fpga_cost_core.sh`)
