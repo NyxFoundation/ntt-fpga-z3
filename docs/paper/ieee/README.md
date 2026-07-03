@@ -24,23 +24,16 @@ from pandoc `longtable` to both-column-spanning `table*` by `fix_longtables.py`
 two-column builds). The datapath, the shaded changed blocks, and both
 adder/subtractor inputs all render cleanly in two columns.
 
-## Remaining polish before submission-clean
+The two-column build now compiles with **no LaTeX errors and no overfull
+boxes**: the equation-dense prose (§2/§3) was converted from inline Unicode
+super/subscripts to proper LaTeX math (`$\log_2 N$`, `$2^{-1}$`,
+`$\mathrm{INTT}(\mathrm{NTT}(x))=2^{10}x$`), which fixed the last overflow
+and improved typography in **both** builds.
 
-1. **Verbatim/code width.** A few `verbatim` blocks (the K-RED equations and
-   the fold7 pseudocode) still overflow the 3.5in column even at
-   `\scriptsize` (they are long single lines). Either wrap/shorten them, set
-   the widest ones as full-column-spanning listings, or move a couple of
-   long derivations to prose. Cosmetic; content is legible.
-2. **Equation-dense prose spacing.** A few paragraphs with clustered Unicode
-   super/subscripts (mapped to math via `newunicodechar` in `preamble.tex`)
-   lose some inter-word spacing. The clean fix is converting those inline
-   Unicode expressions to proper LaTeX math in the source (`$2^{-1}$`,
-   `$N^{-1}$`), which improves both builds.
-
-Neither is on the critical path for the results (all measured/verified numbers
-are in the CI-reproducible scripts and the single-column PDF); both are
-ordinary camera-ready formatting, best done once a venue (hence the exact
-class/format) is chosen.
+Remaining before a specific venue's camera-ready: swap the readable citekey
+markers (`[cfntt]`, …) for `\cite{}` against `references.bib`, and apply the
+chosen venue's exact class/options (page limit, copyright block). These are
+mechanical and venue-specific.
 
 ## Files
 | File | Role |

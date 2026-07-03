@@ -103,16 +103,17 @@ of unity. The *negacyclic* wrap (the `x^N = −1` quotient) is handled by
 pre/post-weighting with powers of ψ, a primitive **2N-th** root
 (`ψ² = ω`, `ψ^N = −1`), so that a pointwise product in the transform domain
 equals the negacyclic convolution back in `R_q`:
-`a · b = INTT(NTT(a) ⊙ NTT(b))`. A radix-2 transform is a sequence of
-`log₂N` stages of **butterflies**; the forward pass uses decimation-in-time
-in natural-to-bit-reversed order (DIT-NR), the inverse decimation-in-frequency
-in bit-reversed-to-natural order (DIF-RN), which lets both share one
-bit-reversed twiddle table and avoids an explicit reorder. The DIF-RN inverse
-butterfly additionally carries a per-stage ½ scaling (the `N⁻¹` of the
-inverse, distributed one factor of 2⁻¹ per stage), realized by a
-"multiply-by-2⁻¹" operator `op21` — the operator the released radix-2 core
-omits (§3). For Falcon/FN-DSA, `N = 1024`, `q = 12289`, and the reference
-uses `ψ = 7` (a primitive 2048-th root mod q).
+$a \cdot b = \mathrm{INTT}(\mathrm{NTT}(a) \odot \mathrm{NTT}(b))$. A radix-2
+transform is a sequence of $\log_2 N$ stages of **butterflies**; the forward
+pass uses decimation-in-time in natural-to-bit-reversed order (DIT-NR), the
+inverse decimation-in-frequency in bit-reversed-to-natural order (DIF-RN),
+which lets both share one bit-reversed twiddle table and avoids an explicit
+reorder. The DIF-RN inverse butterfly additionally carries a per-stage
+$\tfrac12$ scaling (the $N^{-1}$ of the inverse, distributed one factor of
+$2^{-1}$ per stage), realized by a "multiply-by-$2^{-1}$" operator `op21` —
+the operator the released radix-2 core omits (§3). For Falcon/FN-DSA,
+`N = 1024`, `q = 12289`, and the reference uses `ψ = 7` (a primitive 2048-th
+root mod q).
 
 **The CFNTT accelerator.** CFNTT [TCHES 2022] is an in-place, memory-based
 radix-2/4 NTT accelerator whose contribution is a **conflict-free memory
@@ -157,18 +158,19 @@ the released accelerator. We describe it in full: it is both a concrete
 finding worth reporting and the clearest evidence for the "verify, don't
 just test" thesis.
 
-**The defect.** The DIF-RN inverse butterfly must apply a ½ scaling *per
-stage* — the `N⁻¹` of the inverse transform, distributed as one factor of
-2⁻¹ each of the `log₂N` stages (paper Alg. 3; the reference's own Python
-model applies this as `op21`, `x·2⁻¹ mod q = x·(q+1)/2`). The released
-radix-2 RTL **ships `modular_half.v` but instantiates it nowhere** in
+**The defect.** The DIF-RN inverse butterfly must apply a $\tfrac12$ scaling
+*per stage* — the $N^{-1}$ of the inverse transform, distributed as one factor
+of $2^{-1}$ each of the $\log_2 N$ stages (paper Alg. 3; the reference's own
+Python model applies this as `op21`, $x\cdot 2^{-1}\bmod q = x(q{+}1)/2$). The
+released radix-2 RTL **ships `modular_half.v` but instantiates it nowhere** in
 `compact_bf.v`: in inverse mode (`sel=1`) the butterfly computes
-`(u+v, (v−u)·w)` with no halving. The radix-4 PEs (`PE0–PE3.v`) *do*
+$(u{+}v,\ (v{-}u)w)$ with no halving. The radix-4 PEs (`PE0–PE3.v`) *do*
 instantiate `modular_half`, so the omission is specific to the radix-2 tree.
 
 **Consequence.** Each inverse stage is a factor of 2 too large, so after
-`log₂N = 10` stages the radix-2 inverse output is scaled by **2¹⁰ mod q**:
-`INTT(NTT(x)) = 2¹⁰·x`, not `x`. The forward transform is unaffected. There
+$\log_2 N = 10$ stages the radix-2 inverse output is scaled by
+$\mathbf{2^{10}\bmod q}$: $\mathrm{INTT}(\mathrm{NTT}(x)) = 2^{10}x$, not $x$.
+The forward transform is unaffected. There
 is no partial cancellation — the map is linear, so the error is exactly a
 global constant, which is why it is easy to miss by eyeballing a single
 value and impossible to miss once checked against the spec.
@@ -193,7 +195,7 @@ issue #4).
 two `modular_half` gates per butterfly. In our K-RED redesign (§4.1) one of
 them is absorbed at *zero* extra cost: the inverse twiddle is already derived
 from the ROM word by an `op21` (to cancel the K-RED factor), and that same
-`op21` supplies the multiply-path ½; only the add-path ½ needs an explicit
+`op21` supplies the multiply-path $\tfrac12$; only the add-path $\tfrac12$ needs an explicit
 gate. So the multiplier-lean redesign and the bug fix are the same change
 (Lemma 2). Our verified core round-trips exactly (§5, §7).
 

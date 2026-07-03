@@ -73,8 +73,11 @@ repo's CI or scripts.
   (DATE/ICCAD/DAC/ASP-DAC format), page 1 submission-quality.  Two documented
   Fig.1 is now a TikZ VECTOR figure (both-column-spanning figure* via
   gfm+raw_attribute), rendering cleanly in BOTH single- and two-column
-  builds -- a major look upgrade over the old ASCII art.  Remaining polish:
-  a couple of wide verbatim code blocks + equation-dense prose spacing.
+  builds -- a major look upgrade over the old ASCII art.
+- Equation-dense prose (Sec 2/3) converted from inline Unicode to proper
+  LaTeX math -> the IEEE 2-col build now compiles with ZERO errors and ZERO
+  overfull boxes (and both builds read better).  IEEE build is submission-
+  clean; only \cite{} wiring + venue class remain (mechanical).
 - KEY INFRA FINDING: Vivado is NOT required for routed Fmax — openXC7
   toolchain-nix (pin tag 0.8.2) gives it fully in nix.
 - Dockerfile + CITATION.cff + docs/artifact.md: DONE; Zenodo DOI = at release.
