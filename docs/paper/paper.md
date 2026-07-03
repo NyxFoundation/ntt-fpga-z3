@@ -236,10 +236,18 @@ Reading the numbers honestly:
   state both.
 - **The twiddle ROM's win on FPGA is the −50% stored bits**, not a −79%
   logic cut: mapped to distributed LUT-ROM at N=1024 the fold saves only
-  −11% LUT (fold7 adds carry logic); the stored-bit halving converts to a
-  BRAM saving when the table is BRAM-mapped (larger N, or forced). The
-  generic-gate count (7828 → 1611, −79%) is the technology-independent view
-  and overstates the distributed-ROM FPGA benefit.
+  ≈−11% LUT (fold7 adds logic); the stored-bit halving converts to a BRAM
+  saving when the table is BRAM-mapped (larger N, or forced). The
+  generic-gate count (−79%) overstates the distributed-ROM FPGA benefit.
+
+**Timing (logic-depth proxy, `ltp`).** K-RED adds ~4 logic levels vs Barrett
+(21 vs 17, both latency-4 pipelined; Barrett's DSP hides its own multiply
+delay). The ψ-fold's real cost is **depth on the derived-half ROM read**
+(LTP 26 vs 7 for a plain lookup): a logic-depth analysis drove a redesign of
+`fold7` from three chained conditional subtractions to six parallel
+comparators + one subtraction (LTP 31 → 26, area down, still DSP-free,
+re-verified). Fmax needs PnR (§8); a pipelined fold7 removes the ROM-read
+depth at +1 latency.
 
 # 8. Limitations and future work
 

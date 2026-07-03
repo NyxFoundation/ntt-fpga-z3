@@ -34,4 +34,8 @@ repo's CI or scripts.
   the ROM claim (−79% was generic gates; FPGA distributed-ROM is −11% LUT /
   −50% bits) and the DSP-for-LUT tradeoff, honestly, in evaluation.md + paper §7.
 - Vivado-on-NixOS setup guide (docs/vivado-nixos.md): DONE; PnR run still TODO.
+- Open-flow FPGA-primitive + logic-depth (ltp) numbers: DONE (proposed/fpga_cost.sh).
+  Depth analysis DROVE an fold7 redesign (3 chained subs -> parallel compare +
+  1 sub; LTP 31->26, area down, DSP-free), fully re-verified.
+- Bibliography + Compact-FALCON diff: DONE (docs/paper/references.bib).
 - Decide venue split (TCHES full paper vs FMCAD methodology case study).

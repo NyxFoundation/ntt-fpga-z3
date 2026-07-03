@@ -74,6 +74,42 @@ Honest reading (this is why per-FPGA numbers matter):
    at Falcon's N=1024 as distributed ROM the LUT win is modest. We correct
    the paper accordingly.
 
+### Timing proxy: logic depth (open flow, no PnR needed)
+
+Fmax needs PnR, but yosys' longest-topological-path (`ltp`) gives a
+technology-mapped **logic-depth** proxy that already answers the paper's two
+timing questions. Per module (post-`synth_xilinx`, LUT/carry levels):
+
+| module | LTP (logic levels) |
+|---|---|
+| `modular_mul` (Barrett) | 17 |
+| `modular_mul_kred` | 21 |
+| `tf_ROM` | 7 |
+| `tf_rom_fold` | 26 |
+
+- **K-RED vs Barrett (21 vs 17):** the K-RED fold adder chains add ~4 levels
+  of logic. But `modular_mul`'s DSP48 counts as ~1 level in this proxy while
+  hiding a full multiply, so the comparison understates Barrett; both units
+  are latency-4 pipelined, so the *per-stage* path is what sets Fmax, and the
+  K-RED stages are short adder chains. Directionally comparable; confirm with
+  PnR.
+- **fold7 on the ROM path (26 vs 7):** the derived-half read path is
+  materially deeper than a plain ROM lookup — the ψ-fold's real cost is
+  **combinational depth on the upper-half read**, not area. This is the
+  honest risk for the ROM change. We already acted on it (below).
+
+**Depth-driven redesign of fold7 (an RSI step from this very analysis).** The
+first fold7 used three *chained* conditional subtractions (−4q, −2q, −q),
+LTP 31. Recognizing `7x ∈ [0, 7q)`, we replaced them with six **parallel**
+constant comparators that select `m·q` from precomputed multiples and a
+**single** subtraction — LTP 31 → 26, LUT 214 → 192, CARRY4 23 → 18, still
+DSP-free, and re-verified end-to-end (z3 `VERIFIED`, the shipped-ROM
+equivalence miter, the full-transform sim, and the mutation sweep all pass on
+the new datapath). A *pipelined* fold7 (one extra register) would remove the
+depth from the ROM read entirely at +1 latency; we keep the combinational
+version to preserve the drop-in 1-cycle ROM interface, and flag the
+depth/latency trade for PnR.
+
 ### Vivado PnR (still TODO for Fmax + BRAM inference)
 
 The open flow gives LUT/FF/DSP/CARRY but not **Fmax** and won't infer BRAM

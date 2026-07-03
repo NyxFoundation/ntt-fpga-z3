@@ -41,8 +41,10 @@ w_rom[512 + j] = ψ^(bitrev(j)+1) = 7 · w_rom[j]   (mod q)   for ALL j < 512
 7x = (x << 3) − x          < 7q < 2¹⁷  for x < q
 ```
 
-followed by three conditional subtractions (−4q, −2q, −q) to land in
-`[0, q)`. No multiplier, four narrow adders — the `fold7` gate.
+then reduced to `[0, q)` by **six parallel constant comparators** that
+select the multiple `m·q` (from precomputed values) plus a **single**
+subtraction — no multiplier, and a shallow critical path (chosen over the
+naive three chained subtractions after a logic-depth analysis: LTP 31 → 26).
 
 ### 3. The folded ROM
 

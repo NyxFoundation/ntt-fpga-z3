@@ -72,13 +72,23 @@ module tf_rom_fold
       end
     end
 
-    // fold7: 7*base mod q, exact for base < q (z3-proven in verify_rom_fold.py)
-    wire [16:0] t0 = {{base, 3'b000}} - {{3'd0, base}};        // 7x < 7q < 2^17
-    wire [16:0] t1 = (t0 >= 17'd49156) ? t0 - 17'd49156 : t0;  // - 4q
-    wire [16:0] t2 = (t1 >= 17'd24578) ? t1 - 17'd24578 : t1;  // - 2q
-    wire [16:0] t3 = (t2 >= 17'd12289) ? t2 - 17'd12289 : t2;  // -  q
+    // fold7: 7*base mod q, exact for base < q (z3-proven in verify_rom_fold.py).
+    // Parallel reduction (shallow critical path): 7x is in [0,7q), so
+    // m = floor(7x/q) in 0..6 is picked by six CONSTANT comparators in
+    // parallel, then a SINGLE subtraction m*q -- instead of three chained
+    // conditional subtracts.  Cuts the derived-half combinational depth.
+    wire [16:0] t = {{base, 3'b000}} - {{3'd0, base}};        // 7x < 7q < 2^17
+    // mq = m*q selected from PRECOMPUTED constants (a 7-way mux, pure LUT --
+    // no multiplier), so the fold stays DSP-free.
+    wire [16:0] mq = (t >= 17'd73734) ? 17'd73734 :          // 6q
+                     (t >= 17'd61445) ? 17'd61445 :          // 5q
+                     (t >= 17'd49156) ? 17'd49156 :          // 4q
+                     (t >= 17'd36867) ? 17'd36867 :          // 3q
+                     (t >= 17'd24578) ? 17'd24578 :          // 2q
+                     (t >= 17'd12289) ? 17'd12289 : 17'd0;   //  q
+    wire [16:0] r  = t - mq;                                  // single subtract, < q
 
-    assign Q = upper ? t3[13:0] : base;
+    assign Q = upper ? r[13:0] : base;
 endmodule
 """)
 print("tf_rom_fold.v generated: 512 stored words (9^-1-scaled)")
