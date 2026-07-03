@@ -403,9 +403,9 @@ delay). The ψ-fold's real cost is **depth on the derived-half ROM read**
 (LTP 26 vs 7 for a plain lookup): a logic-depth analysis drove a redesign of
 `fold7` from three chained conditional subtractions to six parallel
 comparators + one subtraction (LTP 31 → 26, LUT 214→192, still DSP-free,
-re-verified). The measured Fmax cost is small (§7 Fmax paragraph); a
-pipelined fold7 would remove the ROM-read
-depth at +1 latency.
+re-verified). The measured Fmax cost is small (see the post-route Fmax
+paragraph below); a pipelined fold7 would remove the ROM-read depth at
++1 latency.
 
 **Whole-core area.** Synthesizing the entire core (one butterfly + two
 conflict-free banks + twiddle ROM + address generators + FSM), reference vs
