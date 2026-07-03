@@ -71,10 +71,12 @@ submission from a TCHES-competitive one.
    redesign, all reproducible in CI" narrative is honest and complete; the
    measured hardware is now strong *supporting* evidence.
 2. **Now-viable: DATE/ICCAD (hardware framing).** Open-flow area+Fmax exist
-   (per-module + whole-core); the missing piece is a **SOTA throughput
-   comparison table** vs Kyber/Falcon NTT accelerators. Vivado confirmation
-   (`docs/vivado-nixos.md`, or openXC7 already gives Fmax) strengthens but is
-   optional. A cycle-accurate FSM would add a functional whole-core timed run.
+   (per-module + whole-core) AND a quantitative positioning table (§7): vs the
+   base, **ENS −21%** (Compact-FALCON's own metric) at equal function/Fmax;
+   vs Compact-FALCON, an honest different-design-point note (they are ~8×
+   faster per NTT but ~10× our ENS and do FFT too). Remaining polish: a fuller
+   multi-accelerator table and optional Vivado confirmation. A cycle-accurate
+   FSM would add a functional whole-core timed run.
 3. **Keep the agentic-discovery angle as a separate workshop paper**, not a
    claim in the main paper (where it stays one honest "how it was found"
    paragraph). A visual-vs-code-only ablation would make it a real

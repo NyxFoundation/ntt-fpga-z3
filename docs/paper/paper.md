@@ -387,17 +387,27 @@ twiddle bits at ≈1% Fmax cost.
 target q = 12289 and *both use Barrett with full twiddle ROMs* — neither of
 our contributions appears in them:
 
-| design | reduction | twiddle ROM | mult/butterfly | verified? |
-|---|---|---|---|---|
-| CFNTT `[cfntt]` (the retrofitted base) | Barrett | full, 1023 words | 3 | no (bug in §3) |
-| Compact-FALCON `[compactfalcon2025]` (2025) | Barrett | full FP64, 2 ROMs | Barrett-based | no |
-| **this work** | **K-RED, 1 mult** | **ψ-fold, ½ words** | **1** | **yes (SMT+SbY+sim)** |
+| design | reduction | mult/bf | LUT | FF | DSP | BRAM | Fmax | NTT-1024 | ENS† | verified? |
+|---|---|---|---|---|---|---|---|---|---|---|
+| CFNTT `[cfntt]` (base, our flow) | Barrett | 3 | 784 | 582 | 3 | 2 | ~137 MHz | 5120 CC / 37.4 µs | 969 | no (§3 bug) |
+| **this work** (same flow) | **K-RED** | **1** | 824 | 502 | **1** | 2 | ~136 MHz | 5120 CC / 37.6 µs | **769** | **yes** |
+| Compact-FALCON `[compactfalcon2025]` (cited) | Barrett | — | 17395 | 7950 | 20 | 4 | 134 MHz | 640 CC / 4.78 µs | 8142 | no |
 
-We do not claim a head-to-head Fmax/throughput win — that needs the whole-core
-PnR (§9). The claim is *fewer multipliers and half the twiddle storage, at
-equal function, on a verified and bug-fixed drop-in* — a Pareto move on the
-resource axes NTT accelerators are actually bound by (DSP, twiddle memory),
-against designs that had neither optimization.
+†ENS = LUT/4 + FF/8 + BRAM×200 + DSP×100 (Compact-FALCON's own normalized
+area metric). All three on Artix-7 xc7a100t; ours/base measured in the open
+flow (§7), Compact-FALCON as reported.
+
+Two honest comparisons. **Against the base** (same architecture, our retrofit
+target, same flow) the move is clean and rigorous: **ENS −21% (969→769)**,
+driven by 3→1 DSP, at equal function and Fmax and with the §3 bug fixed — a
+Pareto step on the DSP/twiddle-memory axes NTT cores are bound by.
+**Against Compact-FALCON** we do *not* claim a throughput win: it is ~8×
+faster per NTT (4.78 vs 37.6 µs) but that is a **different design point** — a
+throughput-optimized *combined FFT+NTT* accelerator that is ~10× our ENS and
+spends 20 DSPs. Ours is a minimal single-BFU DSP-lean NTT core whose edge is
+DSP/area economy plus verification, not raw latency. A parallel-BFU
+instantiation (the generator supports it) would trade our area lead for
+throughput, but we do not measure that here.
 
 # 8. Related work
 
