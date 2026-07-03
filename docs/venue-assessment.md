@@ -3,7 +3,7 @@
 A candid read of where this work stands and where it should go. Written to
 avoid self-deception: the goal is an *accepted* paper, not a submitted one.
 
-## Current level: workshop / preprint, trending to a conference case study
+## Current level: submittable conference paper (FMCAD/DATE), with measured hardware
 
 The individual technical ingredients are mostly known art; the value is in
 their **integration, formal verification, and a real bug find**, not in a
@@ -17,10 +17,13 @@ new primitive. Specifically:
   the negation symmetry. Our bit-reversed ψ relation (multiplier-free,
   proven equal to the shipped ROM) is a *distinct mechanism* but an
   *incremental* one.
-- **No FPGA place-and-route / Fmax yet** — the headline metric for a
-  hardware paper is missing (open-flow LUT/DSP/logic-depth only).
-- **Whole-core integration incomplete** (the banked-memory FSM
-  reconstruction is not cycle-accurate).
+- **Open-flow PnR now obtained** (openXC7 nextpnr-xilinx, xc7a100t): real
+  7-series area and post-route Fmax, per-module and whole-core. Not
+  vendor-official Vivado, and no SOTA throughput comparison yet — those are
+  the remaining hardware asks for a *top* HW venue.
+- **Whole-core functional timed-run still open**: the reconstructed FSM
+  elaborates (area/Fmax valid) but is not yet cycle-accurate, so a functional
+  full-core simulation of the banked schedule doesn't yet round-trip.
 
 What IS genuinely strong and defensible today:
 
@@ -35,6 +38,10 @@ What IS genuinely strong and defensible today:
 - A **verified, drop-in, multiplier-lean redesign** (3→1 DSP/butterfly)
   that also halves twiddle storage, generalized by a generator and checked
   on Kyber exhaustively.
+- **Measured hardware payoff** (open flow): the shipped whole core gets
+  3→1 DSP, −14% FF, the bug fix and −50% twiddle bits at **≈1% Fmax cost**
+  (~137→~136 MHz) — the butterfly's −26% dilutes because the memory system
+  dominates the core's critical path.
 
 ## This is really two papers
 
@@ -59,24 +66,23 @@ submission from a TCHES-competitive one.
 
 ## Recommendation
 
-1. **Primary target: FMCAD Applications track (or DATE verification).** The
+1. **Safest target: FMCAD Applications track (or DATE verification).** The
    "verify a real accelerator → find a real bug → verification-guided
-   redesign, all reproducible in CI" narrative is honest, complete, and
-   defensible *today*. This plays to the work's actual strength (functional
-   verification + a concrete find) rather than to hardware performance we
-   haven't measured.
-2. **Upgrade path to DATE/ICCAD (hardware framing):** get the Vivado PnR
-   numbers (`docs/vivado-nixos.md`), finish the FSM so whole-core numbers
-   exist, and add a SOTA comparison table. Only then is a design-conference
-   or TCHES submission defensible.
+   redesign, all reproducible in CI" narrative is honest and complete; the
+   measured hardware is now strong *supporting* evidence.
+2. **Now-viable: DATE/ICCAD (hardware framing).** Open-flow area+Fmax exist
+   (per-module + whole-core); the missing piece is a **SOTA throughput
+   comparison table** vs Kyber/Falcon NTT accelerators. Vivado confirmation
+   (`docs/vivado-nixos.md`, or openXC7 already gives Fmax) strengthens but is
+   optional. A cycle-accurate FSM would add a functional whole-core timed run.
 3. **Keep the agentic-discovery angle as a separate workshop paper**, not a
    claim in the main paper (where it stays one honest "how it was found"
    paragraph). A visual-vs-code-only ablation would make it a real
    contribution rather than an anecdote.
-4. **Do not target TCHES/CHES with the current content.** The reduction is
-   known, the ROM trick is incremental, and there are no silicon/PnR
-   numbers; it would very likely be rejected. Revisit after the hardware
-   upgrade path above.
+4. **TCHES/CHES remains a stretch.** The reduction is known art and the ROM
+   trick is incremental; even with the measured open-flow numbers, a top
+   crypto-HW venue would want vendor Fmax + a throughput win vs SOTA and a
+   sharper novelty framing. Revisit only with those.
 
 ## Honest one-line pitch, per venue
 
@@ -84,9 +90,10 @@ submission from a TCHES-competitive one.
   PQC-NTT accelerator against its spec, found and reported an
   inverse-transform bug, and used the verification to guide a verified,
   multiplier-lean, bug-fixed redesign — reproducibly in CI."
-- **DATE/ICCAD-hardware (post-PnR):** "A drop-in retrofit of a conflict-free
-  NTT accelerator: 3→1 DSP per butterfly and half the twiddle ROM, at equal
-  function, formally verified, with FPGA numbers."
+- **DATE/ICCAD-hardware:** "A drop-in retrofit of a conflict-free NTT
+  accelerator: 3→1 DSP and half the twiddle ROM at ≈1% whole-core Fmax cost,
+  formally verified, with open-flow FPGA numbers — and an inverse-transform
+  bug fixed along the way."
 - **Workshop (agentic):** "An LLM invented a verified twiddle-ROM
   optimization by visually reviewing a 3D floor-plan model inside an
   automated verify-in-the-loop process."
