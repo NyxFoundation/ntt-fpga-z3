@@ -546,7 +546,7 @@ number is reproducible from the public repository's CI.
 # Reproducibility
 
 Everything in this paper is public and CI-checked at
-`github.com/NyxFoundation/ntt-fpga-z3` (the retrofitted RTL, the reference
+`github.com/NyxFoundation/FoldNTT` (the retrofitted RTL, the reference
 CFNTT as a submodule, all proofs, the generator, the FPGA flow, and the
 derivation history). A repo `flake.nix` pins the whole toolchain — including
 the exact openXC7 tag — so `nix develop` drops into a shell where every

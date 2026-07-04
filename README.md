@@ -1,6 +1,6 @@
 # FoldNTT
 
-[![verify](https://github.com/NyxFoundation/ntt-fpga-z3/actions/workflows/verify.yml/badge.svg)](https://github.com/NyxFoundation/ntt-fpga-z3/actions/workflows/verify.yml)
+[![verify](https://github.com/NyxFoundation/FoldNTT/actions/workflows/verify.yml/badge.svg)](https://github.com/NyxFoundation/FoldNTT/actions/workflows/verify.yml)
 
 **A new, formally-verified, DSP-minimal NTT accelerator for Falcon / Proth
 primes — with an on-board Basys 3 demo, entirely Vivado-free.**
@@ -32,8 +32,8 @@ and grew into an own-FSM architecture that fixes it and is DSP-lean by design.
 ## Quickstart
 
 ```sh
-git clone --recurse-submodules https://github.com/NyxFoundation/ntt-fpga-z3.git
-cd ntt-fpga-z3
+git clone --recurse-submodules https://github.com/NyxFoundation/FoldNTT.git
+cd FoldNTT
 
 # 1. verification suite (z3 + SymbiYosys + iverilog), reproducible in CI:
 nix develop            # or: uv + a YosysHQ/oss-cad-suite env

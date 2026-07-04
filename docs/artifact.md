@@ -17,7 +17,7 @@ the scripts that regenerate them:
 Native (Nix):
 
 ```sh
-git clone --recurse-submodules https://github.com/NyxFoundation/ntt-fpga-z3
+git clone --recurse-submodules https://github.com/NyxFoundation/FoldNTT
 cd ntt-fpga-z3
 nix shell nixpkgs#yosys nixpkgs#sby nixpkgs#yices nixpkgs#iverilog nixpkgs#uv \
   --command bash -lc 'run_all.sh \

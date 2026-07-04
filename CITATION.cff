@@ -6,7 +6,7 @@ message: >-
 type: software
 authors:
   - name: NyxFoundation
-repository-code: 'https://github.com/NyxFoundation/ntt-fpga-z3'
+repository-code: 'https://github.com/NyxFoundation/FoldNTT'
 abstract: >-
   FoldNTT is a new, formally verified (z3 + SymbiYosys), DSP-minimal NTT
   accelerator for Falcon / Proth primes (q = 12289). Two folding ideas — a
