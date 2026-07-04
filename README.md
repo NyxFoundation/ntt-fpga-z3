@@ -16,6 +16,61 @@ accelerator ([xiang-rc/cfntt_ref](https://github.com/xiang-rc/cfntt_ref), Chen
 et al., TCHES 2022) — that study *found a real bug* in its inverse transform
 and grew into an own-FSM architecture that fixes it and is DSP-lean by design.
 
+## Architecture
+
+The whole accelerator is **one butterfly working in place**: a control FSM
+walks the transform (stages → groups → butterflies), reading two coefficients
+and a twiddle each step, and writing the two results straight back. The two
+🟡 **folds** — the K-RED butterfly and the ψ-fold ROM — are where the savings
+live.
+
+```mermaid
+flowchart LR
+    subgraph CORE["FoldNTT core — one butterfly, in place"]
+      direction LR
+      FSM["control FSM<br/>(our own design)<br/>stages · groups · butterflies"]
+      RAM[("coefficient RAM<br/>1024 x 14 = 1 BRAM")]
+      ROM["psi-fold twiddle ROM<br/>stores half the words"]
+      BF["K-RED butterfly<br/>1 multiplier, not 3"]
+      FSM -->|"read / write address"| RAM
+      FSM -->|"twiddle index"| ROM
+      RAM -->|"u, v"| BF
+      ROM -->|"w"| BF
+      BF -->|"u +/- v*w  (back in place)"| RAM
+    end
+    HOST(["host:<br/>load / read x"]) <--> RAM
+    RAM -.->|"INTT(NTT(x)) == x  (verified on-chip)"| LED(["Basys 3<br/>PASS LED"])
+
+    classDef fold fill:#fde68a,stroke:#b45309,color:#111,font-weight:bold;
+    class BF,ROM fold;
+```
+
+Inside the butterfly, one **K-RED** multiplier replaces the reference's three
+(the extra two Barrett multipliers become shift-adds), and the per-stage `×½`
+gate on the inverse path — fused from the same twiddle — is the fix for the
+bug we found:
+
+```mermaid
+flowchart LR
+    U(["u"]) --> ADD["mod add"]
+    U --> SUB["mod sub"]
+    V(["v"]) --> MUL["K-RED multiply<br/>1 DSP, shift-add reduction"]
+    W(["twiddle w<br/>from psi-fold ROM"]) --> MUL
+    MUL --> ADD
+    MUL --> SUB
+    ADD --> HALF["x 1/2  (op21)<br/>inverse only = the bug fix"]
+    HALF --> LO(["bf_lower"])
+    SUB --> HI(["bf_upper"])
+
+    classDef fold fill:#fde68a,stroke:#b45309,color:#111,font-weight:bold;
+    class MUL,HALF fold;
+```
+
+*Block → folder:* the butterfly is [`kred-butterfly/`](kred-butterfly/), the
+twiddle ROM is [`psi-fold-rom/`](psi-fold-rom/), and the FSM + RAM + on-board
+self-test are [`ntt-core/`](ntt-core/). (The paper's Fig. 1 in [`docs/`](docs/)
+is the same butterfly at gate/register level.)
+
 ## Inventions (one folder each)
 
 | Folder | Invention | Verified | Result |
