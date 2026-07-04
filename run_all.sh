@@ -37,6 +37,7 @@ run_sby kred-butterfly fv_bf_v2_ntt.sby bmc
 run_sby kred-butterfly fv_bf_v2_intt.sby bmc
 run_sby kred-butterfly fv_reset_v2.sby bmc prove
 run_sby psi-fold-rom fv_rom_fold.sby bmc
+run_sby ntt-core fv_core.sby bmc prove
 
 echo "==== structural audits (lint, feed-forward/latency, single clock)"
 python3 verification/audit_v2.py

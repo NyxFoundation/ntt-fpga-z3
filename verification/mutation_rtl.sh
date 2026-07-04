@@ -51,5 +51,7 @@ mutate kred-butterfly/compact_bf_v2.v "s/assign sub_op1 = sel == 1'b0 ? mux_out1
   kred-butterfly fv_bf_v2_ntt.sby bmc "M6 NTT sub operand corruption   -> fv_bf_v2_ntt FAILs"
 mutate kred-butterfly/abstract_units_v2.v "s/(x_add < M && y_add < M)/(1'b0)/" \
   kred-butterfly fv_bf_v2_ntt.sby bmc "M7 abstraction domain guard off -> fv_bf_v2_ntt FAILs (anyseq junk is live)"
+mutate ntt-core/ntt_core.v "s/rr       <= mode ? 11'd1023 : 11'd1;/rr       <= mode ? 11'd1023 : 11'd0;/" \
+  ntt-core fv_core.sby bmc "M8 FSM rr starts at 0 (ROM addr wraps to 1023) -> fv_core FAILs"
 
 if [ "$fails" -eq 0 ]; then echo "ALL RTL MUTATIONS DETECTED"; else echo "MUTATION SWEEP FAILED ($fails)"; exit 1; fi

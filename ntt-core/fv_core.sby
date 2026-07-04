@@ -1,0 +1,25 @@
+[tasks]
+bmc
+prove
+
+[options]
+# bmc: sanity/base window long enough to cover start -> several butterflies
+# prove: k-induction; the FORMAL-block invariants in ntt_core.v are equality
+# closed forms over the loop counters, so the step case closes at small k.
+bmc: mode bmc
+bmc: depth 40
+prove: mode prove
+prove: depth 6
+
+[engines]
+smtbmc yices
+
+[script]
+read -formal fv_core_stubs.v
+read -formal ntt_core.v
+chparam -set BF_LAT 8 ntt_core
+prep -top ntt_core
+
+[files]
+fv_core_stubs.v
+ntt_core.v

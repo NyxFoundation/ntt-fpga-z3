@@ -215,4 +215,59 @@ module ntt_core #(
             endcase
         end
     end
+
+`ifdef FORMAL
+    // ------------------------------------------------------------------
+    // FSM safety proof (fv_core.sby, k-induction with the datapath
+    // stubbed): the control invariants below are strong enough to be
+    // inductive and discharge the two external preconditions the leaf
+    // proofs rely on — the ROM address bound (tf_rom_fold is only
+    // verified for A < 1023) and RAM write-port disjointness — under
+    // ARBITRARY host/start behaviour, for both modes.
+    //
+    // Twiddle-counter closed forms (the heart of the proof):
+    //   NTT  (stage p = 9..0, group k):  rr == 2^(9-p)   + k
+    //   INTT (stage p = 0..9, group k):  rr == 2^(10-p) - 1 - k
+    // both with k < ngrp = 2^(9-p), hence rr in [1, 1023] whenever a
+    // twiddle read can be issued, so rom_a = rr-1 in [0, 1022].
+    // ------------------------------------------------------------------
+    reg f_init = 1'b1;
+    always @(posedge clk) f_init <= 1'b0;
+    always @* if (f_init) assume (rst);   // start the base case in reset
+
+    always @* if (!rst && !f_init) begin
+        // state validity + handshake protocol
+        assert (st <= S_RDADDR2);
+        assert (busy == (st != S_IDLE));
+        if (done) assert (st == S_IDLE && !busy);
+
+        // loop-counter invariants (exclude IDLE/DONE, where rr has
+        // legitimately walked one step past the range)
+        if (st != S_IDLE && st != S_DONE) begin
+            assert (p >= 0 && p <= 9);
+            assert (j < Jv);
+            assert (k < ngrp);
+            if (!cur_mode)
+                assert (rr == (11'd1 << (4'd9 - p[3:0])) + k);
+            else
+                assert (rr == ((11'd2 << (4'd9 - p[3:0])) - 11'd1) - k);
+            assert (hi <= 11'd1023);      // both RAM addresses in range,
+                                          // no truncation aliasing
+        end
+
+        // (1) ROM precondition: every issued address is < 1023
+        if (rom_ren) assert (rom_a <= 10'd1022);
+
+        // (2) RAM write ports never collide, and the write-back really
+        //     targets the presented lo/hi pair
+        if (a_we && b_we) begin
+            assert (st == S_NEXT);
+            assert (a_addr == lo[AW-1:0] && b_addr == hi[AW-1:0]);
+            assert (a_addr != b_addr);
+        end
+
+        // (3) host words entering the RAM are always reduced
+        if (!busy && h_we) assert (pa_din < 14'd12289);
+    end
+`endif
 endmodule

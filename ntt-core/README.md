@@ -46,6 +46,14 @@ pulses when finished.
   All checks: `python3 ntt-core/run_check.py` (exit 0 iff all pass; every dump
   is deleted before and required after each simulation, and simulator exit
   codes are checked, so stale files can never pass).
+- **FSM safety: PROVEN** (`fv_core.sby`, SymbiYosys k-induction, datapath
+  stubbed) — under *arbitrary* host/start behaviour, in both modes: every
+  issued twiddle-ROM address is ≤ 1022 (discharging `tf_rom_fold`'s proven
+  domain for **this** FSM), the two RAM write ports never target the same
+  address (`hi ≤ 1023`, no truncation aliasing), the `busy`/`done` protocol
+  holds, and the twiddle counter follows the closed forms
+  `rr = 2^(9-p)+k` (NTT) / `rr = 2^(10-p)-1-k` (INTT).  Non-vacuity: mutation
+  M8 (`rr` mis-seeded) makes the proof fail.
 - **Synthesis (yosys `synth_xilinx`, Artix-7):** **1 DSP48**, **1 RAMB18**,
   ~186 FF, ~600 LUT — fits **Basys 3** (`xc7a35t`: 90 DSP / 50 BRAM / 20.8k
   LUT) with vast headroom.
@@ -77,7 +85,6 @@ FASM, fasm2frames, xc7frames2bit) produces a valid 2.19 MB bitstream.
 
 ## Next (optional)
 
-1. Formal check of the FSM (BMC: `busy`/`done` handshake, address bounds).
-2. Throughput: pipeline within a stage (2-bank conflict-free) for ~1
+1. Throughput: pipeline within a stage (2-bank conflict-free) for ~1
    butterfly/cycle.
 3. A 7-segment PASS/FAIL display for a nicer demo.
