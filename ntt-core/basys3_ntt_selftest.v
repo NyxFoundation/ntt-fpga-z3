@@ -27,7 +27,7 @@ module basys3_ntt_selftest #(
 );
     // ---- /2 clock: the core's Fmax (open flow) is ~95 MHz, so run the whole
     // design on a 50 MHz BUFG-buffered clock to meet timing with margin.  The
-    // self-test is not throughput-critical (it finishes in ~1.7 ms), so the
+    // self-test is not throughput-critical (it finishes in ~3 ms), so the
     // divided clock is invisible; only the verdict LEDs matter.
     reg clk_div = 1'b0;
     always @(posedge clk) clk_div <= ~clk_div;
@@ -41,6 +41,12 @@ module basys3_ntt_selftest #(
         if (rstcnt != 4'hF) begin rstcnt <= rstcnt + 1'b1; rst <= 1'b1; end
         else rst <= 1'b0;
     end
+
+    // ---- 2-FF synchronizer for the asynchronous button ---------------------
+    // btn_start comes straight off a pin; feeding it into FSM next-state
+    // logic unsynchronized risks metastability on the T_DONE->T_IDLE edge.
+    reg btn_m = 1'b0, btn_s = 1'b0;
+    always @(posedge clk_core) begin btn_m <= btn_start; btn_s <= btn_m; end
 
     // ---- the core ----------------------------------------------------------
     reg           start, mode, h_we;
@@ -73,12 +79,12 @@ module basys3_ntt_selftest #(
             idx <= 0; xg <= 14'd1; miss <= 0; btn_q <= 0;
         end else begin
             start <= 1'b0; h_we <= 1'b0;
-            btn_q <= btn_start;
+            btn_q <= btn_s;
             case (ts)
             // idle briefly, then auto-start; btnC re-runs
             T_IDLE: begin
                 idx <= 0; xg <= 14'd1; miss <= 0;
-                led[5:3] <= 3'd0;
+                led <= 16'h0000;       // clear the previous verdict on re-run
                 ts <= T_LOAD;
             end
             // ---- load x[i] via the host port ----
@@ -117,7 +123,7 @@ module basys3_ntt_selftest #(
                 led[2]     <= (miss != 0);     // FAIL
                 led[15:6]  <= miss;            // mismatch count
                 led[5:3]   <= 3'd7;
-                if (btn_start & ~btn_q) ts <= T_IDLE;   // re-run on button edge
+                if (btn_s & ~btn_q) ts <= T_IDLE;   // re-run on button edge (synced)
             end
             default: ts <= T_IDLE;
             endcase

@@ -35,9 +35,26 @@ nix shell nixpkgs#yosys --command yosys -p \
    write_json $OUT/design.json" >/dev/null
 
 echo "== 2/4 nextpnr-xilinx place & route -> FASM =="
+# no exit-code masking: a P&R failure aborts the flow immediately
 "$NP" --chipdb "$CHIPDB" --xdc ntt-core/basys3.xdc --json "$OUT/design.json" \
-      --fasm "$OUT/design.fasm" --write "$OUT/routed.json" 2>&1 \
-   | grep -iE "Max frequency|ERROR" || true
+      --fasm "$OUT/design.fasm" --write "$OUT/routed.json" \
+      > "$OUT/nextpnr.log" 2>&1 \
+  || { echo "nextpnr-xilinx FAILED:"; tail -30 "$OUT/nextpnr.log"; exit 1; }
+grep -iE "Max frequency" "$OUT/nextpnr.log" || true
+# timing gate: the core logic runs on clk/2 = 50 MHz, so EVERY reported clock
+# must close at >= 50 MHz (and any explicit constraint FAIL aborts).
+if grep -q "FAIL at" "$OUT/nextpnr.log"; then
+  echo "TIMING GATE FAIL: a constrained clock missed its target"; exit 1
+fi
+FMIN=$(grep -oE "Max frequency for clock +'[^']+': +[0-9.]+" "$OUT/nextpnr.log" \
+       | grep -oE '[0-9.]+$' | sort -n | head -1)
+if [ -z "${FMIN:-}" ]; then
+  echo "TIMING GATE FAIL: nextpnr reported no Fmax"; exit 1
+fi
+awk -v f="$FMIN" 'BEGIN {
+  if (f+0 < 50.0) { print "TIMING GATE FAIL: min Fmax " f " MHz < 50 MHz"; exit 1 }
+  print "timing gate OK: min Fmax " f " MHz >= 50 MHz (core clock)"
+}'
 
 echo "== 3/4 fasm2frames (prjxray db: $DB) =="
 nix-shell -p "python311.withPackages(ps: with ps; \

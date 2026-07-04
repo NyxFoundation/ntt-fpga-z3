@@ -22,7 +22,9 @@
 //
 // Control:  start=1 with mode (0=NTT,1=INTT) begins a transform on the RAM
 // contents; done pulses when finished.  Load/read the RAM through the
-// host port (h_*) while idle.
+// host port (h_*) while idle.  Host input words are reduced mod q on load
+// (one conditional subtract — 14-bit input < 2q), so the core never feeds
+// an unreduced value into the verified datapath.
 // ============================================================================
 `timescale 1ns / 1ps
 module ntt_core #(
@@ -59,9 +61,14 @@ module ntt_core #(
     // block so the two write ports never form a multi-driver race; the engine
     // always drives lo on A and hi on B (distinct), and reads and writes of an
     // address never occur in the same cycle.
+    // Host words are fully reduced on load: h_din is 14 bits (max 16383
+    // < 2q), so ONE conditional subtract enforces the < q operating envelope
+    // that the verified datapath (K-RED butterfly, add/sub/half leaf proofs)
+    // is justified for — even when the host writes a raw value in [q, 2^14).
+    wire [DW-1:0] h_din_red = (h_din >= 14'd12289) ? h_din - 14'd12289 : h_din;
     wire [AW-1:0] pa_addr = busy ? a_addr : h_addr;
     wire          pa_we   = busy ? a_we   : h_we;
-    wire [DW-1:0] pa_din  = busy ? a_din  : h_din;
+    wire [DW-1:0] pa_din  = busy ? a_din  : h_din_red;
     always @(posedge clk) begin
         if (pa_we) mem[pa_addr] <= pa_din;
         if (b_we)  mem[b_addr]  <= b_din;

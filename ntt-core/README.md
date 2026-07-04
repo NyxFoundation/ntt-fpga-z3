@@ -62,7 +62,8 @@ python3 ntt-core/run_check.py
 `basys3_ntt_selftest.v` self-checks `INTT(NTT(x))==x` on-chip and shows the
 verdict on the LEDs (led0=done, led1=PASS, led2=FAIL, led[15:6]=mismatch
 count).  It runs the core on a **/2 BUFG clock (50 MHz)**; post-route the core
-clock closes at ~102 MHz, so 50 MHz has 2x margin.  Simulated PASS
+clock closes at ~70–95 MHz (run-dependent), and `bit.sh` **gates the build**
+on every reported clock closing ≥ 50 MHz.  Simulated PASS
 (`tb_selftest.v`, with the `sim_prims.v` BUFG stub).
 
 ```sh

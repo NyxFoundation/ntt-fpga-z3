@@ -37,7 +37,9 @@ module tb_ntt_core;
                 if (t == 0) x[m] = (m*7 + 1) % Q;
                 else begin
                     lcg  = lcg * 32'd1664525 + 32'd1013904223;
-                    x[m] = lcg % Q;
+                    // last round-trip vector: RAW 14-bit words (may be >= q)
+                    // — exercises the host-port mod-q reduction on load
+                    x[m] = (t == NRT-1) ? lcg[13:0] : (lcg % Q);
                 end
         end
     endtask
@@ -124,10 +126,11 @@ module tb_ntt_core;
             vec_errors = 0;
             for (i = 0; i < N; i = i + 1) begin
                 rd(i[AW-1:0], got);
-                if (got !== x[i]) begin
+                // raw inputs are reduced on load, so round-trip lands on x mod q
+                if (got !== (x[i] % Q)) begin
                     if (vec_errors < 4)
                         $display("  MISMATCH t=%0d i=%0d got=%0d want=%0d",
-                                 t, i, got, x[i]);
+                                 t, i, got, x[i] % Q);
                     vec_errors = vec_errors + 1;
                 end
             end
