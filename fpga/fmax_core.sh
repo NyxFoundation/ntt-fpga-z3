@@ -8,7 +8,7 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd); root=$(cd "$here/../.." && pwd)
 : "${NP:?}" "${CHIPDB:?}"; YOSYS=${YOSYS:-yosys}
-RTL="$root/cfntt_ref/hardware_code_radix-2"; FC="$root/proposed/fullcore"
+RTL="$root/cfntt_ref/hardware_code_radix-2"; FC="$root/verification/fullcore"
 common="$RTL/address_generator.v $RTL/conflict_free_memory_map.v $RTL/arbiter.v $RTL/network_bank_in.v $RTL/network_bf_in.v $RTL/network_bf_out.v $RTL/data_bank.v $RTL/tf_address_generator.v $RTL/modular_add.v $RTL/modular_substraction.v $RTL/modular_half.v $RTL/common_lib.v"
 keep="setattr -mod -set keep 1 data_bank; setattr -mod -set keep 1 modular_mul; setattr -mod -set keep 1 modular_mul_kred; setattr -mod -set keep 1 tf_ROM; setattr -mod -set keep 1 tf_rom_fold;"
 core() { local top=$1; shift; local w=$(mktemp -d) best=0 f

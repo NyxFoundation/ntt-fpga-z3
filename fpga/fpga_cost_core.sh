@@ -16,7 +16,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 RTL=cfntt_ref/hardware_code_radix-2
-FC=proposed/fullcore
+FC=verification/fullcore
 common="$RTL/address_generator.v $RTL/conflict_free_memory_map.v $RTL/arbiter.v \
   $RTL/network_bank_in.v $RTL/network_bf_in.v $RTL/network_bf_out.v \
   $RTL/data_bank.v $RTL/tf_address_generator.v $RTL/modular_add.v \
