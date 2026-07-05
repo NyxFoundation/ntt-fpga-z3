@@ -31,3 +31,6 @@
 \newunicodechar{⁻}{\textsuperscript{-}}\newunicodechar{₀}{\textsubscript{0}}
 \newunicodechar{₁}{\textsubscript{1}}\newunicodechar{₂}{\textsubscript{2}}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+% prose references say "Table 1"; keep captions arabic (IEEEtran defaults to
+% Roman numerals)
+\renewcommand\thetable{\arabic{table}}

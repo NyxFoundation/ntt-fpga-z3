@@ -1,2 +1,7 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
+
+% shrink longtables in the single-column draft so wide tables stay inside
+% the text block (the IEEE build converts them to table* separately)
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\scriptsize}

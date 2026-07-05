@@ -3,35 +3,35 @@ title: "FoldNTT: A Formally Verified Multiplier- and Twiddle-Lean NTT Core for P
 author: Masato Kamba (Nyx Foundation)
 date: 2026
 abstract: |
-  We contribute one artifact: FoldNTT, a more efficient, formally verified
-  redesign of the released radix-2 CFNTT number-theoretic-transform
-  accelerator (TCHES 2022) for the Falcon / FN-DSA prime q = 12289. The improvement
-  rests on two algebraic facts. Because the prime has the special shape
-  q = 3·2¹² + 1, and because the table of precomputed constants has a
-  mirror symmetry, most of the multiplication hardware and half of the
-  constant storage can be replaced by a few shift-and-add gates: the
-  redesigned core computes exactly the same transform with one hardware
-  multiplier per butterfly instead of three and half the stored constants,
-  at essentially the same clock speed. The shift-add reduction (K-RED) is
-  established, including in recent Kyber hardware; what is new is the
-  verified drop-in retrofit, the table symmetry `w[N/2+j] = ψ·w[j]` (prior
-  half-memory generators rely on a negation symmetry this table does not
-  have), and the fact that the same retrofit repairs a functional bug we
-  found in the released RTL: its inverse transform omits a per-stage
-  halving and returns 2¹⁰·x (reported upstream). Every step is
-  machine-checked against the mathematics, which is how the bug surfaced:
-  exact-width SMT with divider-free congruences, compositional proofs with
-  domain-faithful abstractions, k-induction for control, and 8-mutation
-  non-vacuity, rerun by CI on every push. A parameterized generator
-  instantiates the construction for other Proth primes (validated on
-  Kyber / ML-KEM q = 3329: the reducer exhaustively, the generated RTL by
-  simulation sweep). The result, on Artix-7 in a fully open flow, is 3→1
-  DSP48 per butterfly and 50% fewer twiddle bits at ≈1% whole-core Fmax
-  cost, with the inverse transform now correct, demonstrated in two
-  instantiations of the one construction: the drop-in streaming retrofit,
-  and a complete own-FSM core (control proven by k-induction;
-  data-independent control flow and latency, no leakage claim) running
-  end-to-end to a timing-gated Basys-3 bitstream.
+  Hardware for lattice-based post-quantum cryptography spends most of its
+  area on the number-theoretic transform (NTT), whose cost is dominated
+  by modular multipliers and twiddle-factor storage. We present FoldNTT,
+  a formally verified redesign of the released radix-2 CFNTT accelerator
+  (TCHES 2022) for the Falcon / FN-DSA prime q = 12289 that computes
+  exactly the same transform with one hardware multiplier per butterfly
+  instead of three and half the stored twiddle constants, at essentially
+  the same clock speed. The savings follow from two algebraic facts. The
+  prime's Proth shape q = 3·2¹² + 1 turns modular reduction into
+  shift-and-add K-RED folds; K-RED is established, including in recent
+  Kyber hardware, and the verified drop-in retrofit is the new part. The
+  bit-reversed twiddle table obeys `w[N/2+j] = ψ·w[j]`, a symmetry
+  unavailable to negation-based half-memory generators, so half the table
+  is derived by one shift-and-subtract gate. The same retrofit also
+  repairs a functional bug we found in the released RTL: its inverse
+  transform omits a per-stage halving and returns 2¹⁰·x (reported
+  upstream). Every step is machine-checked against the mathematics
+  (exact-width SMT with divider-free congruences, compositional proofs
+  with domain-faithful abstractions, k-induction for control, 8-mutation
+  non-vacuity), rerun by CI on every push; the bug surfaced through
+  exactly this checking. A parameterized generator instantiates the
+  construction for other Proth primes, validated on Kyber / ML-KEM
+  q = 3329 (the reducer exhaustively, the generated RTL by simulation
+  sweep). On Artix-7 in a fully open flow, two instantiations demonstrate
+  the design: the drop-in streaming retrofit (3→1 DSP48 per butterfly,
+  50% fewer twiddle bits, ≈1% whole-core Fmax cost), and a complete
+  own-FSM core, its control proven by k-induction with data-independent
+  latency (no leakage claim), running end-to-end to a timing-gated
+  Basys-3 bitstream.
 ---
 
 <!-- Complete draft. Every number and claim traces to a CI-reproducible
@@ -56,11 +56,11 @@ the surrounding memory system or control, is directly valuable.
 
 We start from a concrete, peer-reviewed artifact: the CFNTT accelerator
 [CFNTT, TCHES 2022], whose contribution is a conflict-free memory mapping
-for an in-place radix-2/4 NTT, released as open RTL. Our contribution is
-one artifact built from it: a more efficient NTT core that computes
-exactly the same transform with a third of the multipliers and half the
-stored constants, every step proven equal to the mathematics. Three
-components deliver this.
+for an in-place radix-2/4 NTT, released as open RTL. From it we build
+FoldNTT, a more efficient NTT core that computes exactly the same
+transform with a third of the multipliers and half the stored constants,
+with every step proven equal to the mathematics. Three components
+deliver this.
 
 - **A verified 1-multiplier butterfly (§4.1).** For q = 12289 = 3·2¹²+1 (a
   Proth prime, and Falcon's modulus), the reference's Barrett reduction
@@ -93,12 +93,12 @@ RTL (§4.3), validated on Kyber (q = 3329). §6 reports costs measured in an
 open FPGA flow (yosys + openXC7 `nextpnr-xilinx`, Artix-7), with no Vivado
 required: at the whole core, 3→1 DSP per butterfly and half the twiddle
 storage at ≈1% Fmax cost (−21% on Compact-FALCON's ENS normalized-area
-metric, defined in §6), with the inverse-transform bug fixed. The
-contribution is one construction with two instantiations: the drop-in
-streaming retrofit demonstrates the claim on the published architecture,
-and an own-FSM single-BFU core demonstrates the same verified blocks
-running end-to-end, which the released radix-2 core cannot do because its
-control FSM was never released (§6).
+metric, defined in §6), with the inverse-transform bug fixed. The design is
+one construction with two instantiations: the drop-in streaming retrofit
+demonstrates the claim on the published architecture, and an own-FSM
+single-BFU core demonstrates the same verified blocks running end-to-end,
+which the released radix-2 core cannot do because its control FSM was
+never released (§6).
 
 **Framing.** The deliverable is the more efficient verified core; the
 method that made it possible is *verify, don't just test*: every change is
@@ -214,8 +214,8 @@ butterfly; only the shaded blocks change. We cite four small algebraic
 facts as Lemmas 1–4; they are stated in Appendix A, with paper proofs in
 the artifact (`docs/lemmas.md`) and machine checks as the certificates.
 
-Table 1 states the axis of the paper: each algebraic fact and the hardware
-it saves.
+Table 1 summarizes the design: each algebraic fact and the hardware it
+saves.
 
 **Table 1. Algebraic fact → hardware saved.**
 
@@ -370,7 +370,10 @@ subsumes the special case.
 When is the fold cheap? Two parameters decide. The fold count F stays at
 2–3 whenever m is large relative to k's width, and each fold's k·x costs
 adders proportional to the signed-digit weight of k. Running the artifact's
-own planner (`generator/kred_gen.py`) on primes used in deployed schemes:
+own planner (`generator/kred_gen.py`) on primes used in deployed schemes
+gives Table 2:
+
+**Table 2. K-RED fold economics for deployed NTT primes.**
 
 | prime | q | folds F | k·x cost (signed-digit) |
 |---|---|---|---|
@@ -468,10 +471,10 @@ every simulation artifact is deleted before the run and required after it,
 and simulator exit codes are checked. We adopted this discipline after a
 repository reorganization silently disconnected an earlier cross-check.
 
-Tables 2 and 3 summarize what is proven and what is validated (all
+Tables 3 and 4 summarize what is proven and what is validated (all
 reproduced by CI on every push).
 
-**Table 2. Proven properties (all inputs in scope).**
+**Table 3. Proven properties (all inputs in scope).**
 
 | property | method | scope |
 |---|---|---|
@@ -484,7 +487,7 @@ reproduced by CI on every push).
 | reset / power-up-X / single-clock | SymbiYosys + netlist audit | structural |
 | non-vacuity | 8 RTL mutations | each kills its proof |
 
-**Table 3. Validated by simulation.**
+**Table 4. Validated by simulation.**
 
 | property | method | scope |
 |---|---|---|
@@ -508,7 +511,9 @@ xc7a100t) counts; the latter two are what the claims rest on. Only
 vendor (Vivado) confirmation and physical on-board execution remain
 outside CI (§8).
 
-**FPGA primitives (Artix-7 target).**
+Table 5 gives per-module FPGA primitives.
+
+**Table 5. FPGA primitives (Artix-7 target).**
 
 | block | LUT | FF | **DSP48** | logic depth (LTP) |
 |---|---|---|---|---|
@@ -547,9 +552,11 @@ sustains) cost is small (see the post-route Fmax
 paragraph below); a pipelined fold7 would remove the ROM-read depth at
 +1 latency.
 
-**Whole-core area.** Synthesizing the entire core (one butterfly + two
-conflict-free banks + twiddle ROM + address generators + FSM), reference vs
-proposed, on 7-series primitives:
+**Whole-core area.** Table 6 synthesizes the entire core (one butterfly +
+two conflict-free banks + twiddle ROM + address generators + FSM),
+reference vs proposed, on 7-series primitives.
+
+**Table 6. Whole-core area, reference vs proposed (7-series primitives).**
 
 | core | LUT | FF | **DSP48** | RAMB18 |
 |---|---|---|---|---|
@@ -610,7 +617,9 @@ target q = 12289 and both use Barrett with full twiddle ROMs; neither of
 our contributions appears in them (the two 'this work' rows are the two
 instantiations of the one construction: the streaming retrofit carries the
 like-for-like comparison, the own-FSM core is the design point that
-executes end-to-end):
+executes end-to-end). Table 7 shows the comparison.
+
+**Table 7. Comparison with Falcon-NTT accelerators (Artix-7).**
 
 | design | mult/bf | DSP | Fmax | NTT-1024 | ENS† | verified |
 |---|---|---|---|---|---|---|
@@ -765,9 +774,9 @@ generation are templated but not yet automatic.
 
 # 9. Conclusion
 
-The contribution is a single artifact: an NTT accelerator that computes
-the same transform with a third of the multipliers and half the stored
-constants, every step proven equal to the mathematics. Verifying the
+FoldNTT computes the same transform as the accelerator it started from,
+with a third of the multipliers and half of the stored constants, and
+every step is proven equal to the mathematics. Verifying the
 released accelerator exposed a real inverse-transform bug; the K-RED
 retrofit fixes it for free, the ψ-fold halves the twiddle ROM, and a
 generator extends the construction to other Proth primes. Two
@@ -812,7 +821,9 @@ chip's physical fabric — is too heavy for it):
 - **Bitstream** (§6): `ntt-core/bit.sh` runs the full Vivado-free Basys-3
   flow, timing-gated (every reported clock ≥ 50 MHz).
 
-**What a hardware team can lift directly:**
+Table 8 maps the liftable deliverables.
+
+**Table 8. What a hardware team can lift directly.**
 
 | deliverable | file | contract | certified by |
 |---|---|---|---|

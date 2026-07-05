@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Convert pandoc longtables to both-column-spanning table*+tabular so they
-compile under IEEEtran two-column."""
+compile under IEEEtran two-column.  A bold "Table N. ..." paragraph
+immediately before a longtable (the caption convention in paper.md) is
+absorbed into a real \\caption{} inside the float, so tables carry their
+number and title; numbering is sequential, matching the manual numbers."""
 import re, sys
 f = sys.argv[1]
 s = open(f).read()
 
 def conv(m):
-    body = m.group(0)
+    caption = m.group('cap')
+    body = m.group('tbl')
     colspec = re.search(r'\\begin\{longtable\}\[\]\{([^}]*)\}', body).group(1)
     inner = body
     inner = re.sub(r'\\begin\{longtable\}\[\]\{[^}]*\}', '', inner)
@@ -27,9 +31,18 @@ def conv(m):
     lastfoot, rest = take('endlastfoot', rest)
     parts = [head or firsthead, rest.strip(), lastfoot or foot]
     inner = '\n'.join(p for p in parts if p)
-    return ("\\begin{table*}[t]\n\\centering\\footnotesize\n"
-            "\\begin{tabular}{%s}\n%s\n\\end{tabular}\n\\end{table*}" % (colspec, inner))
+    cap = ''
+    if caption:
+        cap = "\\caption{%s}\n" % ' '.join(caption.split())
+    return ("\\begin{table*}[t]\n\\centering\\footnotesize\n%s"
+            "\\begin{tabular}{%s}\n%s\n\\end{tabular}\n\\end{table*}"
+            % (cap, colspec, inner))
 
-s2 = re.sub(r'\\begin\{longtable\}.*?\\end\{longtable\}', conv, s, flags=re.S)
+pat = re.compile(
+    r'(?:\\textbf\{Table\s+[0-9]+\.\s+(?P<cap>[^{}]*?)\}\s*\n\s*\n)?'
+    r'(?P<tbl>\\begin\{longtable\}.*?\\end\{longtable\})', re.S)
+s2 = pat.sub(conv, s)
 open(f, 'w').write(s2)
-print("converted %d longtables" % len(re.findall(r'\\begin\{table\*\}', s2)))
+ncap = len(re.findall(r'\\caption\{', s2)) - s.count('\\caption{')
+print("converted %d longtables (%d with captions)"
+      % (len(re.findall(r'\\begin\{table\*\}', s2)), ncap))
