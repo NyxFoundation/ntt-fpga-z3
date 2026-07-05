@@ -11,6 +11,7 @@ claim traces to a CI-reproducible script.
 | `lemmas.md` | the 4 lemmas with proofs + machine-check cross-refs |
 | `evaluation.md` | system-sim results + synthesis cost table (PnR TODO) |
 | `generalization.md` | Proth-prime generator; Falcon + Kyber instances |
+| `algorithm-level.md` | where the ideas apply outside hardware; prime-selection guidance (with `generator/prime_scout.py`) |
 | `paper/paper.md` | full manuscript draft (section TODOs + refs inline) |
 | `venue-assessment.md` | where-to-submit / what-level analysis |
 
