@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 docs/refs/*.pdf
 docs/paper/paper.pdf
+docs/paper/draft.pdf
 docs/paper/paper.tex
 docs/paper/ieee/paper_ieee.*
 docs/paper/ieee/build.log

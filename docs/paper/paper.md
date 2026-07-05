@@ -1,6 +1,6 @@
 ---
 title: "FoldNTT: A Formally Verified Multiplier- and Twiddle-Lean NTT Core for Proth Primes"
-author: NyxFoundation
+author: Masato Kamba (Nyx Foundation)
 date: 2026
 abstract: |
   We contribute one artifact: FoldNTT, a more efficient, formally verified
@@ -35,8 +35,9 @@ abstract: |
 ---
 
 <!-- Complete draft. Every number and claim traces to a CI-reproducible
-     script (see the Reproducibility section). Builds to a single-column PDF
-     (Makefile) and a two-column IEEE draft (ieee/), both clean. Remaining
+     script (see the Reproducibility section). The canonical PDF is the
+     two-column IEEEtran build (make -> ieee/build.sh); a single-column
+     serif draft remains as `make draft.pdf`. Both clean. Remaining
      before a specific venue: \cite{} wiring against references.bib and the
      venue's class/page limit; a few references.bib entries carry
      [verify at camera-ready] notes for paywalled venue metadata. -->
@@ -827,9 +828,9 @@ to a bitstream with no vendor downloads.
 
 Both a `flake.nix` (`nix develop`) and a `Dockerfile` pin the whole toolchain
 for artifact evaluation; a Zenodo DOI will be minted from the tagged release.
-The single source for this paper (`docs/paper/paper.md`) builds to both a
-single-column PDF and a two-column IEEE draft (`docs/paper/Makefile`,
-`docs/paper/ieee/`).
+The single source for this paper (`docs/paper/paper.md`) builds to the
+canonical two-column IEEEtran PDF (`make` in `docs/paper/`) and to a
+single-column draft (`make draft.pdf`).
 
 # Appendix A: the four lemmas
 

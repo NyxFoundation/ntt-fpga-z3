@@ -22,6 +22,9 @@ python3 "$here/fix_longtables.py" "$here/paper_ieee.tex"
 # deeper, so point them one directory further up
 sed -i 's|{\.\./assets/|{../../assets/|g' "$here/paper_ieee.tex"
 
+# proper IEEE author block (pandoc emits \author{} as plain text)
+sed -i 's|\\author{Masato Kamba (Nyx Foundation)}|\\author{\\IEEEauthorblockN{Masato Kamba}\\IEEEauthorblockA{Nyx Foundation}}|' "$here/paper_ieee.tex"
+
 cd "$here"
 xelatex -interaction=nonstopmode paper_ieee.tex >build.log 2>&1 || true
 xelatex -interaction=nonstopmode paper_ieee.tex >build.log 2>&1 || true

@@ -5,8 +5,9 @@ holds the bibliography. Build a PDF (or a LaTeX intermediate for a venue
 template) with pandoc:
 
 ```sh
-nix shell nixpkgs#pandoc nixpkgs#texliveSmall --command make        # paper.pdf
-nix shell nixpkgs#pandoc --command make paper.tex                   # LaTeX only
+nix shell nixpkgs#pandoc nixpkgs#texliveFull --command make          # paper.pdf (two-column IEEE)
+nix shell nixpkgs#pandoc nixpkgs#texliveSmall --command make draft.pdf  # single-column serif draft
+nix shell nixpkgs#pandoc --command make paper.tex                    # LaTeX only
 ```
 
 The citekeys in the prose (`[cfntt]`, `[longa2016kred]`, …) are readable
