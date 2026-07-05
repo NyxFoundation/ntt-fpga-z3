@@ -34,3 +34,14 @@
 % prose references say "Table 1"; keep captions arabic (IEEEtran defaults to
 % Roman numerals)
 \renewcommand\thetable{\arabic{table}}
+% keep floats near their references: allow double-column floats on the SAME
+% page as their source (stock LaTeX defers them to the next page), and relax
+% the float limits so a results page may carry several tables
+\usepackage{dblfloatfix}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{dbltopnumber}{4}
+\setcounter{totalnumber}{5}

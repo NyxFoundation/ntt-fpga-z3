@@ -34,9 +34,22 @@ def conv(m):
     cap = ''
     if caption:
         cap = "\\caption{%s}\n" % ' '.join(caption.split())
-    return ("\\begin{table*}[t]\n\\centering\\footnotesize\n%s"
+    global tblno
+    tblno += 1
+    if tblno in SINGLE_COL:
+        # narrow enough for one 3.5in column: a single-column float can sit
+        # on the same page as (or right after) its reference
+        return ("\\begin{table}[!t]\n\\centering\\scriptsize\n%s"
+                "\\begin{tabular}{%s}\n%s\n\\end{tabular}\n\\end{table}"
+                % (cap, colspec, inner))
+    return ("\\begin{table*}[!t]\n\\centering\\footnotesize\n%s"
             "\\begin{tabular}{%s}\n%s\n\\end{tabular}\n\\end{table*}"
             % (cap, colspec, inner))
+
+# tables (in order of appearance) whose natural width fits one column;
+# the rest must span both columns
+SINGLE_COL = {2, 6}
+tblno = 0
 
 pat = re.compile(
     r'(?:\\textbf\{Table\s+[0-9]+\.\s+(?P<cap>[^{}]*?)\}\s*\n\s*\n)?'
