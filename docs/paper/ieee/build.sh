@@ -18,6 +18,10 @@ pandoc --from gfm+raw_attribute --to latex -s \
 
 python3 "$here/fix_longtables.py" "$here/paper_ieee.tex"
 
+# image paths in paper.md are relative to docs/paper/; we compile one level
+# deeper, so point them one directory further up
+sed -i 's|{\.\./assets/|{../../assets/|g' "$here/paper_ieee.tex"
+
 cd "$here"
 xelatex -interaction=nonstopmode paper_ieee.tex >build.log 2>&1 || true
 xelatex -interaction=nonstopmode paper_ieee.tex >build.log 2>&1 || true

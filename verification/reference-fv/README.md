@@ -1,8 +1,10 @@
 # Yosys / SymbiYosys verification: the 8 items beyond datapath proofs
 
-The z3 suite (`../verify_radix2.py`) proves the *combinational* datapath and
+The z3 (an automated theorem prover) suite (`../verify_radix2.py`) proves
+the *combinational* datapath and
 static structure on hand-built models. This directory closes the remaining
-gaps directly on the RTL (no transcription): yosys reads the released
+gaps directly on the RTL (the register-level hardware source code — no
+transcription): yosys reads the released
 Verilog, SymbiYosys proves the assertions, `equiv_opt` checks synthesis
 equivalence, and structural audits cover the rest.
 
@@ -32,9 +34,11 @@ MODE=bmc ./run_all.sh    # BMC only (skip the k-induction 'prove' tasks)
 Every assertion is *time-local*: it relates outputs to inputs at most
 `latency` cycles back, guarded by a saturating counter. The initial register
 state is left unconstrained (symbolic), which over-approximates every
-reachable state. So a BMC of depth `guard + latency + 1` covers every window
+reachable state. So a BMC (exhaustive exploration of all behaviours up to a cycle
+depth) of depth `guard + latency + 1` covers every window
 of every execution, so unbounded correctness follows without induction.
-`prove` (k-induction) tasks are additionally run where they converge
+`prove` (k-induction: an inductive proof over the state machine) tasks
+are additionally run where they converge
 (`fv_modular_mul`, `fv_reset`, `fv_agu`); for the abstracted butterfly
 harnesses plain induction does not converge without invariant strengthening
 and is omitted: the BMC argument above is already the complete proof.
@@ -44,8 +48,10 @@ and is omitted: the BMC argument above is already the complete proof.
 - Engine: `smtbmc yices`. The golden multiply uses `%` by the constant q.
   Bit-blasting the DUT's Barrett datapath against it is the one expensive
   obligation. It is paid once, in `fv_modular_mul.sby` (~8 min); the
-  butterfly tasks reuse that result compositionally and close in seconds.
-- LEC excludes `modular_mul`: a monolithic SAT miter over a hard multiplier
+  butterfly (the transform's multiply-and-add step) tasks reuse that
+  result compositionally and close in seconds.
+- LEC excludes `modular_mul`: a monolithic SAT miter (a circuit that
+  compares two implementations output-for-output) over a hard multiplier
   is intractable for `equiv_simple` (industry uses dedicated datapath-SEC
   tools there). Its gate-level behaviour is instead verified functionally,
   end-to-end, in item 1, a stronger statement than netlist equivalence.

@@ -1,7 +1,8 @@
 # CFNTT-KRED: a 1-multiplier, bug-fixed radix-2 NTT butterfly
 
 Invention #1 of the view → implement → verify loop: a drop-in replacement
-for cfntt_ref's modular multiplier and butterfly. It cuts 3 hardware
+for cfntt_ref's modular multiplier and butterfly (the small
+multiply-and-add step the transform repeats). It cuts 3 hardware
 multipliers to 1 and fixes the upstream INTT-halving bug
 ([cfntt_ref#7](https://github.com/xiang-rc/cfntt_ref/issues/7)) inside
 the architecture. Same ports, same delay fabric, same latencies
@@ -97,17 +98,20 @@ mux each make the corresponding proof fail with a counterexample.
 | `compact_bf.v` (reference — INTT-broken) | 2820 | 297 | 3 |
 | `compact_bf_v2.v` (INTT-correct) | **2549 (−10%)** | 270 | **1** |
 
-On FPGA the multipliers map to DSP blocks: 3 → 1 DSP per butterfly,
+On FPGA the multipliers map to DSP blocks (the FPGA's dedicated
+multiplier blocks): 3 → 1 DSP per butterfly,
 scaling with the number of parallel butterflies.
 
 ## Notes
 
 - K-RED is known art (Longa & Naehrig, *Speeding up the NTT*, 2016;
   software, same q). The contribution is the verified hardware fusion
-  into CFNTT: single-ROM 9⁻¹ twiddles, the op21-on-ROM derivation that
+  into CFNTT: single-ROM 9⁻¹ twiddles (the precomputed constants the
+  transform multiplies by), the op21-on-ROM derivation that
   yields the INTT twiddle and the halving in one gate, the 81⁻¹ PWM
   double-pass, and end-to-end formal verification.
 - PWM double-pass costs one extra pass over N coefficients per product
   (≈ +6% multiplier cycles for a full poly-mult).
 - Timing: the folds are adder chains inside the same latency-4 envelope;
-  place-and-route numbers are out of scope here.
+  place-and-route (mapping the logic onto the chip's physical fabric)
+  numbers are out of scope here.

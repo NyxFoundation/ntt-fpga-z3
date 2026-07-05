@@ -6,9 +6,11 @@ under a real Verilog simulator.
 
 ## What runs (`run_stream.py` — CI)
 
-`tb_stream.v` drives the invented RTL (`compact_bf_v2` +
+`tb_stream.v` drives the invented RTL (the register-level hardware source
+code: `compact_bf_v2` +
 `modular_mul_kred` + `tf_rom_fold`) through a complete N=1024 DIT-NR NTT and
-DIF-RN INTT under iverilog, one butterfly per cycle (pipelined; results
+DIF-RN INTT under iverilog, one butterfly (the transform's small
+multiply-and-add step) per cycle (pipelined; results
 collected via an index delay line: butterflies within a stage touch
 disjoint indices, so back-to-back issue has no RAW hazard, and the pipeline
 is drained between stages). The whole folded ROM is pre-read into `wrom[]`
@@ -47,17 +49,19 @@ tracing (`tb_debug` in git history):
 - The result is now well-defined but still numerically wrong
   (`INTT(NTT(x))` does not return `2¹⁰·x`), so the schedule is not yet
   cycle-accurate: the remaining gap is the precise alignment of the twiddle
-  address/ROM read and the two operand/output networks (`network_bf_in`,
+  (precomputed multiplier constant) address/ROM read and the two operand/output networks (`network_bf_in`,
   `network_bf_out`, whose `sel` is `shift_7`-delayed) relative to the bank
   read/write, across the per-`k`-group twiddle changes.
 
-A faithful cycle-accurate reconstruction of the unreleased FSM is a
+A faithful cycle-accurate reconstruction of the unreleased FSM (the
+control state machine) is a
 research task in its own right and remains future work. It is not on the
 critical path for the inventions' correctness: the streaming harness above
 establishes the full transform at the RTL level, the SymbiYosys proofs
 establish each module, and the whole-core area synthesizes from this
 elaborating (not-yet-timed) core (`../fpga_cost_core.sh`). What the finished
-FSM would add is a timed whole-core run and, with Vivado, routed Fmax.
+FSM would add is a timed whole-core run and, with Vivado, routed Fmax
+(the highest clock frequency the routed design sustains).
 
 ## Files
 

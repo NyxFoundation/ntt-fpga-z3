@@ -2,7 +2,8 @@
 
 Invention #2 of the loop, and the one found by visually reviewing the 3D
 architecture model. After CFNTT-KRED shrank the arithmetic, the rendered
-floorplan showed the 1023-word twiddle ROM as the largest block left,
+floorplan showed the 1023-word twiddle ROM (the precomputed constants
+the transform multiplies by) as the largest block left,
 next to two precedents: the K-RED fold stages (shift-add constant
 multiplies are ~free) and the op21 gate on the ROM output (deriving a
 twiddle variant from a stored word already pays once). This module applies
@@ -57,7 +58,8 @@ Q_out = i ≥ 512 ? fold7(base) : base
 ```
 
 The stored words are 9⁻¹-scaled because the unit composes with the
-CFNTT-KRED butterfly ([`../kred/`](../kred/)). Constant scalings commute
+CFNTT-KRED butterfly (the small multiply-and-add step the transform
+repeats; [`../kred/`](../kred/)). Constant scalings commute
 with the fold, so the same trick works unscaled for the original design.
 
 ### 4. It recurses
@@ -69,7 +71,8 @@ w[256 + j] = 49·w[j]  = fold7²    → 256-word ROM (−75% bits), ≤ 3 chaine
 w[128 + j] = 7⁴·w[j]  = fold7⁴    → …
 ```
 
-The 512-word (1-level) point is the shipped RTL; the 256-word variant is
+The 512-word (1-level) point is the shipped RTL (the register-level
+hardware source code); the 256-word variant is
 validated end-to-end in `rom_fold_math.py`.
 
 ## Files
@@ -117,4 +120,5 @@ shift is caught with a counterexample.
   shipped ROM at every address rather than re-derived from the spec.
 - The fold sits combinationally after the ROM register; it adds gate delay
   on the w path, which has two registers of slack in `compact_bf`. Timing
-  closure is expected, but place-and-route is out of scope here.
+  closure is expected, but place-and-route (mapping the logic onto the
+  chip's physical fabric) is out of scope here.

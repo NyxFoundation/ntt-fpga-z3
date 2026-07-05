@@ -1,6 +1,8 @@
 # Post-route Fmax: open flow (no Vivado)
 
-Routed Fmax for the reference vs proposed multiplier and butterfly on
+Routed Fmax (the highest clock frequency the routed design sustains) for
+the reference vs proposed multiplier and butterfly (the transform's small
+multiply-and-add unit) on
 Artix-7 xc7a100t, using openXC7's `nextpnr-xilinx`. No Vivado, no
 multi-GB AMD download.
 
@@ -44,7 +46,8 @@ ports must be pinned. Reported = best of 3 placer seeds.
 | `compact_bf` (reference, INTT-buggy) | ~164 MHz |
 | `compact_bf_v2` (K-RED, INTT-correct) | ~122 MHz |
 
-K-RED is Fmax-neutral at the multiplier (3→1 DSP for free), and the
+K-RED is Fmax-neutral at the multiplier (3→1 DSP — the FPGA's dedicated
+multiplier blocks — for free), and the
 butterfly trades ~26% clock for the DSP/memory savings, partly the cost of
 correctness: the reference omits the §3 halving. A pipelined K-RED/fold
 recovers most of it at +1 latency.
@@ -55,7 +58,7 @@ The same flow on the whole core (`top_poly_mul` vs `top_poly_mul_v2`, linked
 against `fullcore/fsm_recon.v` to elaborate; static timing needs only the
 netlist) gives ~137 vs ~136 MHz: the butterfly's −26% dilutes to ~1% at
 the core, because the memory system / address generators / networks / FSM
-(identical in both) dominate the critical path.
+(the control state machine; identical in both) dominate the critical path.
 
 ## Files
 | File | Role |

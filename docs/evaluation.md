@@ -2,13 +2,15 @@
 
 ## §sim: system-level RTL simulation (DONE)
 
-`verification/fullcore/run_stream.py` drives the invented RTL
-(`compact_bf_v2` + `modular_mul_kred` + `tf_rom_fold`) through a full N=1024
+`verification/fullcore/run_stream.py` drives the invented RTL (the
+register-level hardware source code:
+`compact_bf_v2` + `modular_mul_kred` + `tf_rom_fold`) through a full N=1024
 NTT and INTT under iverilog. On every tested vector, the RTL `NTT(x)` equals
-the reference `DIT_NR_NTT` on the real twiddle table, and
+the reference `DIT_NR_NTT` on the real twiddle table (the precomputed
+constants the transform multiplies by), and
 `INTT(NTT(x)) == x` exactly. The issue-#7 halving fix and the 9⁻¹-scaled
 folded ROM therefore compose into a correct transform at the system level,
-not merely per butterfly.
+not merely per butterfly (the transform's small multiply-and-add step).
 
 This closes the gap the module proofs leave. fv_bf_v2 proves the butterfly
 matches the spec for every input; `run_stream.py` shows that the specced
@@ -17,7 +19,7 @@ whole transform on real gates (iverilog).
 
 Caveat: cfntt_ref's exact banked-memory schedule is not reproduced, because
 the released `fsm.v` is empty (upstream #4). A reconstructed FSM
-(`fsm_recon.v`) driving the banked datapath is included but not yet
+(control state machine, `fsm_recon.v`) driving the banked datapath is included but not yet
 cycle-accurate. It is future work and off the critical path, since the
 inventions are drop-in with identical latency. See
 `verification/fullcore/README.md`.
@@ -26,7 +28,8 @@ inventions are drop-in with identical latency. See
 
 All numbers come from `yosys` generic synthesis (`synth -flatten -noabc`),
 reproducible via `kred-butterfly/cost_report.ys` and the ROM comparison. Cell
-counts are technology-independent gate counts, not LUTs.
+counts are technology-independent gate counts, not LUTs (the FPGA's
+logic cells).
 
 | Block | reference | proposed | Δ |
 |---|---|---|---|
@@ -56,7 +59,8 @@ real 7-series primitives resolves both. Per module, flattened
 
 Reading, and why the per-FPGA numbers matter:
 
-1. DSP 3 → 1 holds on real primitives: −67% DSP per butterfly and −27% FF
+1. DSP (the FPGA's dedicated multiplier blocks) 3 → 1 holds on real
+   primitives: −67% DSP per butterfly and −27% FF (register cells)
    on the multiplier. NTT accelerators are almost always DSP-bound, since
    many parallel butterflies compete for the scarce DSP blocks. This is the
    saving that matters, and it scales ×d.
@@ -65,7 +69,8 @@ Reading, and why the per-FPGA numbers matter:
    On a LUT-bound design the trade could be neutral-to-negative; on the
    usual DSP-bound design it is a clear win. We report both directions.
 3. The ROM's −79% was generic gates, not FPGA. Mapped to primitives, the
-   ROM stays in distributed LUT-RAM (yosys does not infer BRAM for
+   ROM stays in distributed LUT-RAM (yosys does not infer BRAM — an
+   on-chip memory block — for
    1023×14 here), so `tf_rom_fold` is only −20% LUT (241 → 192), with
    fold7 adding CARRY4. The defensible ROM claim is the −50% stored bits,
    which converts to a BRAM saving only when the table is large enough to
@@ -109,7 +114,9 @@ Whole-core reading:
 
 ### Timing proxy: logic depth (open flow, no PnR needed)
 
-Fmax needs PnR, but yosys' longest-topological-path (`ltp`) gives a
+Fmax (the highest clock frequency the routed design sustains) needs PnR
+(place and route: mapping the logic onto the chip's physical fabric), but
+yosys' longest-topological-path (`ltp`) gives a
 technology-mapped logic-depth proxy that already answers the paper's two
 timing questions. Per module (post-`synth_xilinx`, LUT/carry levels):
 
@@ -136,8 +143,9 @@ The first fold7 used three chained conditional subtractions (−4q, −2q, −q)
 LTP 31. Since `7x ∈ [0, 7q)`, we replaced them with six parallel constant
 comparators that select `m·q` from precomputed multiples, followed by a
 single subtraction: LTP 31 → 26, LUT 214 → 192, CARRY4 23 → 18, still
-DSP-free. The new datapath was re-verified end-to-end: z3 `VERIFIED`, the
-shipped-ROM equivalence miter, the full-transform sim, and the mutation
+DSP-free. The new datapath was re-verified end-to-end: z3 (an automated theorem prover) `VERIFIED`, the
+shipped-ROM equivalence miter (a circuit comparing the two
+implementations output-for-output), the full-transform sim, and the mutation
 sweep all pass. A pipelined fold7 (one extra register) would remove the
 depth from the ROM read entirely at +1 latency; we keep the combinational
 version to preserve the drop-in 1-cycle ROM interface, and flag the

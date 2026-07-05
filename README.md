@@ -7,19 +7,35 @@
 
 [![verify](https://github.com/NyxFoundation/FoldNTT/actions/workflows/verify.yml/badge.svg)](https://github.com/NyxFoundation/FoldNTT/actions/workflows/verify.yml)
 
-A formally verified NTT accelerator for Falcon / Proth primes, with an
-on-board Basys 3 demo and a Vivado-free toolchain.
+FoldNTT is one thing: a more efficient chip design for the polynomial
+multiplication at the heart of post-quantum cryptography, proven correct.
 
-The name comes from the two core ideas, both of which fold something: K-RED
-folds modular reduction into shift-adds (one multiplier per butterfly instead
-of three), and the ψ-fold twiddle ROM folds the table in half (a shift-add
-derives the other half). Every module is proven equal to its mathematical
-spec with z3 + SymbiYosys, and the whole core runs end-to-end on a real FPGA.
+The contribution in one sentence: because the cryptographic prime
+q = 12289 = 3·2¹² + 1 has a special algebraic shape, and because the table
+of precomputed constants has a mirror symmetry, most of the multiplication
+hardware and half of the constant storage can be replaced by a few
+shift-and-add gates, so the chip computes exactly the same transform with
+one hardware multiplier instead of three and half the stored constants, at
+the same speed, and every step is machine-proven equal to the mathematics.
+
+No hardware background is needed to see why this matters. Multiplier
+circuits are the scarcest resource on these chips, and computing the
+remainder after division by q is normally what consumes them. The prime's
+shape makes that remainder computable with shifts and additions (the K-RED
+trick), and the symmetry w[N/2+j] = ψ·w[j] means half the constant table
+is redundant: one shift-and-subtract recreates it. Proving every step
+equal to the mathematics, instead of testing a few examples, is also what
+exposed a real bug in the original design's inverse transform (reported
+upstream).
+
+The name: both ideas fold something. K-RED folds the remainder step into
+shift-adds, and the ψ-fold ROM folds the constant table in half.
 
 FoldNTT began as a formal-verification study of the released CFNTT radix-2
 accelerator ([xiang-rc/cfntt_ref](https://github.com/xiang-rc/cfntt_ref), Chen
-et al., TCHES 2022). That study found a bug in the inverse transform; the
-project became an own-FSM architecture that fixes it with fewer multipliers.
+et al., TCHES 2022). That study found the inverse-transform bug; the project
+became an own-FSM architecture that fixes it with fewer multipliers, running
+end-to-end on a real FPGA (a Basys 3 board) with no vendor software.
 
 ## Architecture
 
@@ -76,6 +92,22 @@ twiddle ROM is [`psi-fold-rom/`](psi-fold-rom/), and the FSM + RAM + on-board
 self-test are [`ntt-core/`](ntt-core/). The paper's Fig. 1 in [`docs/`](docs/)
 shows the same butterfly at gate/register level.
 
+## How it was found
+
+The two folds came out of a recursive loop we call Visioned Vibe Coding:
+formally verify the design, render it as a 3D floor-plan model
+([visually-3d](https://github.com/NyxFoundation)), show the renders to a
+vision-language model, turn its observations into design changes, and
+verify again before accepting anything. The ψ-fold was spotted in the
+render itself: after K-RED shrank the arithmetic, the twiddle ROM was
+visibly the largest block left, and half of it turned out to be
+mathematically redundant.
+
+<p align="center">
+  <img src="docs/assets/discovery-timeline.png" alt="3D model at five points of the discovery loop" width="100%"><br/>
+  <sub><i>The model across the loop's 37 revisions: first draft (v1); matured CFNTT floor plan, Barrett with 3 DSP (v31); the K-RED butterfly lands (v32); the ψ-fold is spotted (v36); FoldNTT final (v37). The full revision history, with the verification verdicts between steps, is published with the gallery.</i></sub>
+</p>
+
 ## Inventions
 
 | Folder | Invention | Verified | Result |
@@ -123,6 +155,7 @@ openFPGALoader -b basys3 ntt-core/build/design.bit   # LED1 = self-test PASS
   bug (missing per-stage halving) was found by verification, reported upstream.
 - **Open toolchain** synthesis → place-and-route → bitstream with no Vivado
   (yosys + openXC7 nextpnr-xilinx + prjxray).
+- MIT-licensed throughout (the upstream `cfntt_ref` submodule is also MIT).
 
 See [`docs/`](docs/) for the paper and [`docs/venue-assessment.md`](docs/venue-assessment.md)
 for the submission strategy.

@@ -1,8 +1,8 @@
 # newcore: a minimal, verified own-FSM NTT/INTT accelerator
 
-A self-contained single-butterfly NTT/INTT core for Falcon
-(N=1024, q=12289), built from the verified blocks but with its own control
-FSM. Unlike the reverse-engineered CFNTT FSM (`../verification/fullcore/`,
+A self-contained single-butterfly (one multiply-and-add unit) NTT/INTT
+core for Falcon (N=1024, q=12289), built from the verified blocks but
+with its own control FSM (state machine). Unlike the reverse-engineered CFNTT FSM (`../verification/fullcore/`,
 which elaborates but does not round-trip), this core round-trips by
 construction: `INTT(NTT(x)) == x`.
 
@@ -14,18 +14,20 @@ accelerator that runs end-to-end and fits a hobbyist board.
 ## Design (deliberately simple)
 
 - **`compact_bf_v2`**: the 1-multiplier K-RED butterfly (latency 6), reused
-  and already SMT/SbY-verified. Its INTT mode carries the per-stage `1/2`, so
+  and already SMT/SbY-verified (SMT: an automated theorem prover). Its INTT mode carries the per-stage `1/2`, so
   the transform round-trips to `x` (the released core's bug is absent).
-- **`tf_rom_fold`**: the ψ-fold twiddle ROM (stores half the words).
-- **coefficient RAM**: one inlined dual-port BRAM array (1024×14 → 1×RAMB18);
+- **`tf_rom_fold`**: the ψ-fold twiddle ROM (the transform's precomputed
+  multiplier constants; stores half the words).
+- **coefficient RAM**: one inlined dual-port BRAM (on-chip memory block)
+  array (1024×14 → 1×RAMB18);
   host port for load/read while idle.
 - **own FSM**: nested loops `p`(stage)/`k`(group)/`j`(butterfly), one
   butterfly at a time (sequential, so a single dual-port BRAM suffices and
   correctness is easy to see and verify). The schedule is
   simulation-validated on every CI run against the golden streaming harness
   `../verification/fullcore/tb_stream.v` and an independent Python golden;
-  the FSM's control invariants are additionally proven by k-induction (see
-  "FSM safety" under Status).
+  the FSM's control invariants are additionally proven by k-induction (an
+  inductive proof over the state machine; see "FSM safety" under Status).
 
 `start`+`mode` (0=NTT, 1=INTT) runs a transform on the RAM contents; `done`
 pulses when finished.
@@ -55,8 +57,9 @@ pulses when finished.
   holds, and the twiddle counter follows the closed forms
   `rr = 2^(9-p)+k` (NTT) / `rr = 2^(10-p)-1-k` (INTT).  Non-vacuity: mutation
   M8 (`rr` mis-seeded) makes the proof fail.
-- **Synthesis** (yosys `synth_xilinx`, Artix-7): 1 DSP48, 1 RAMB18,
-  ~186 FF, ~600 LUT. Fits a Basys 3 (`xc7a35t`: 90 DSP / 50 BRAM / 20.8k
+- **Synthesis** (yosys `synth_xilinx`, Artix-7): 1 DSP48 (the FPGA's
+  dedicated multiplier block), 1 RAMB18, ~186 FF, ~600 LUT (the FPGA's
+  register and logic cells). Fits a Basys 3 (`xc7a35t`: 90 DSP / 50 BRAM / 20.8k
   LUT).
 
 ## Run
@@ -81,8 +84,10 @@ bash ntt-core/bit.sh          # yosys -> openXC7 nextpnr -> FASM -> prjxray -> .
 openFPGALoader -b basys3 ntt-core/build/design.bit
 ```
 
-Verified reproducibly: the full flow (synth, place and route, FASM,
-fasm2frames, xc7frames2bit) produces a valid 2.19 MB bitstream.
+Verified reproducibly: the full flow (synth, place and route — mapping
+the logic onto the chip's physical fabric — FASM, fasm2frames,
+xc7frames2bit) produces a valid 2.19 MB bitstream (the file that
+configures the FPGA).
 
 ## Next (optional)
 
