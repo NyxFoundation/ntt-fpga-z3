@@ -471,29 +471,39 @@ every simulation artifact is deleted before the run and required after it,
 and simulator exit codes are checked. We adopted this discipline after a
 repository reorganization silently disconnected an earlier cross-check.
 
-Tables 3 and 4 summarize what is proven and what is validated (all
-reproduced by CI on every push).
+Figure 2 draws the resulting boundary at a glance; Appendix B tabulates
+every obligation with its method and scope. All of it is reproduced by CI
+on every push.
 
-**Table 3. Proven properties (all inputs in scope).**
-
-| property | method | scope |
-|---|---|---|
-| K-RED unit == k^F·a·b mod q | z3, divider-free congruence | full 28-bit domain |
-| fold7 == 7·x mod q | z3, congruence | full domain (x<q) |
-| `tf_rom_fold` ≡ shipped `tf_ROM` | SymbiYosys miter | every address, any REN |
-| butterfly (NTT/INTT) == spec | SbY compositional, domain-faithful | all inputs, latency-exact |
-| own-FSM control safety (§5) | SymbiYosys k-induction, datapath stubbed | arbitrary host behaviour, both modes |
-| host load reduced mod q | k-induction assert, h_din unconstrained | all 16384 words, symbolic |
-| reset / power-up-X / single-clock | SymbiYosys + netlist audit | structural |
-| non-vacuity | 8 RTL mutations | each kills its proof |
-
-**Table 4. Validated by simulation.**
-
-| property | method | scope |
-|---|---|---|
-| full transform INTT(NTT(x))=x | iverilog simulation | random vectors, N=1024 |
-| own core NTT / INTT vs independent golden | iverilog + golden, bijectivity | multi-vector incl. raw ≥ q, fresh dumps |
-| generalization (Kyber q=3329) | exhaustive + iverilog | all z<q², generated RTL |
+```{=latex}
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}[font=\scriptsize,
+  zone/.style={draw, rounded corners=1.5pt, align=left, inner sep=5pt,
+               text width=0.88\columnwidth}]
+\node[zone, fill=black!14] (p) {\textbf{Proven for all inputs in scope}
+  (z3 + SymbiYosys)\\[1pt]
+  K-RED unit, full 28-bit domain \; $\cdot$ \; fold7 \; $\cdot$ \;
+  ROM $\equiv$ shipped table, every address \; $\cdot$ \;
+  butterfly, latency-exact, both modes \; $\cdot$ \;
+  FSM control invariants (k-induction, any host behaviour) \; $\cdot$ \;
+  host load $< q$ \; $\cdot$ \; 8-mutation non-vacuity};
+\node[zone, fill=black!5, below=2mm of p] (s)
+  {\textbf{Validated by simulation} (freshness-enforced, independent
+  goldens)\\[1pt]
+  composed $N{=}1024$ transform \; $\cdot$ \; own-core NTT/INTT
+  round-trips \; $\cdot$ \; generated Kyber RTL};
+\node[zone, below=2mm of s] (o) {\textbf{Outside scope:}
+  vendor timing \; $\cdot$ \; physical boards \; $\cdot$ \;
+  power/EM side channels};
+\end{tikzpicture}
+\caption{The verification boundary. Everything in the top zone is proven
+for every input in its stated scope; the middle zone is exercised by
+freshness-enforced simulation against independent goldens; the bottom
+zone is explicitly out of scope (\S8).}
+\label{fig:boundary}
+\end{figure}
+```
 
 The harnesses themselves are reusable: each is a self-contained SymbiYosys
 or Python file parameterized per module, and the three disciplines they
@@ -511,17 +521,45 @@ xc7a100t) counts; the latter two are what the claims rest on. Only
 vendor (Vivado) confirmation and physical on-board execution remain
 outside CI (§8).
 
-Table 5 gives per-module FPGA primitives.
+Table 3 gives the measured resources, per module and for the whole core.
 
-**Table 5. FPGA primitives (Artix-7 target).**
+**Table 3. FPGA resources, per module and whole core (Artix-7, `synth_xilinx`).**
 
-| block | LUT | FF | **DSP48** | logic depth (LTP) |
-|---|---|---|---|---|
-| `modular_mul` (Barrett) → `modular_mul_kred` | 29 → 83 | 101 → **74** | **3 → 1** | 17 → 21 |
-| `compact_bf` (ref) → `compact_bf_v2` | 158 → 231 | 297 → 270 | **3 → 1** | — |
-| `tf_ROM` → `tf_rom_fold` | 241 → **192** | 14 → 15 | 0 → 0 | 7 → 26 |
+| | LUT | FF | **DSP48** | RAMB18 | LTP |
+|---|---|---|---|---|---|
+| `modular_mul` (Barrett) → `modular_mul_kred` | 29 → 83 | 101 → **74** | **3 → 1** | — | 17 → 21 |
+| `compact_bf` (ref) → `compact_bf_v2` | 158 → 231 | 297 → 270 | **3 → 1** | — | — |
+| `tf_ROM` → `tf_rom_fold` | 241 → **192** | 14 → 15 | 0 → 0 | — | 7 → 26 |
+| whole core: reference `top_poly_mul` | 784 | 582 | **3** | 2 | — |
+| whole core: proposed `top_poly_mul_v2` | 824 | 502 | **1** | 2 | — |
 
-These numbers support the following observations.
+Figure 3 is the summary: what the retrofit changes, normalized to the
+reference core. These numbers support the following observations.
+
+```{=latex}
+\begin{figure}[!t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[font=\scriptsize]
+\newcommand{\perfbar}[4]{%
+  \draw[fill=black!8, draw=black!30] (0,#1) rectangle (5.2,#1+0.34);
+  \draw[fill=black!45, draw=black!55] (0,#1) rectangle (#2,#1+0.34);
+  \node[anchor=east] at (-0.12,#1+0.17) {#3};
+  \node[anchor=west] at (5.32,#1+0.17) {#4};}
+\perfbar{2.55}{1.73}{DSP48 per butterfly}{33\% (3 $\to$ 1)}
+\perfbar{1.85}{2.60}{stored twiddle bits}{50\%}
+\perfbar{1.15}{4.13}{ENS area score}{79\% (969 $\to$ 769)}
+\perfbar{0.45}{5.16}{whole-core Fmax}{99\% ($\sim$137 $\to$ $\sim$136 MHz)}
+\draw[black!50, dashed] (5.2,0.3) -- (5.2,3.05)
+  node[above, black, font=\scriptsize] {reference = 100\%};
+\end{tikzpicture}}
+\caption{The streaming retrofit vs the reference core, normalized to the
+reference (100\%, dashed). Lower is better for the first three bars;
+Fmax is retained. Same function, inverse transform corrected (\S3).}
+\label{fig:summary}
+\end{figure}
+```
+
 
 - The headline result is the DSP (the FPGA's dedicated multiplier block)
   count: 3 → 1 per butterfly (−67%),
@@ -552,16 +590,9 @@ sustains) cost is small (see the post-route Fmax
 paragraph below); a pipelined fold7 would remove the ROM-read depth at
 +1 latency.
 
-**Whole-core area.** Table 6 synthesizes the entire core (one butterfly +
-two conflict-free banks + twiddle ROM + address generators + FSM),
-reference vs proposed, on 7-series primitives.
-
-**Table 6. Whole-core area, reference vs proposed (7-series primitives).**
-
-| core | LUT | FF | **DSP48** | RAMB18 |
-|---|---|---|---|---|
-| reference `top_poly_mul` | 784 | 582 | **3** | 2 |
-| proposed `top_poly_mul_v2` | 824 | 502 | **1** | 2 |
+**Whole-core area.** The last two rows of Table 3 synthesize the entire
+core (one butterfly + two conflict-free banks + twiddle ROM + address
+generators + FSM), reference vs proposed.
 
 At the core level the DSP count falls 3→1 (scaling ×d with parallel
 butterflies), FF falls 14%, and LUT rises 5% (the K-RED DSP→LUT trade
@@ -617,9 +648,9 @@ target q = 12289 and both use Barrett with full twiddle ROMs; neither of
 our contributions appears in them (the two 'this work' rows are the two
 instantiations of the one construction: the streaming retrofit carries the
 like-for-like comparison, the own-FSM core is the design point that
-executes end-to-end). Table 7 shows the comparison.
+executes end-to-end). Table 4 shows the comparison.
 
-**Table 7. Comparison with Falcon-NTT accelerators (Artix-7).**
+**Table 4. Comparison with Falcon-NTT accelerators (Artix-7).**
 
 | design | mult/bf | DSP | Fmax | NTT-1024 | ENS† | verified |
 |---|---|---|---|---|---|---|
@@ -721,7 +752,7 @@ RTL. One iteration of the loop: (1) formally verify the current design;
 (2) regenerate the 3D model from the verified source; (3) show rendered
 screenshots to a vision-language model, which critiques the scene and
 looks for structure; (4) turn any observation into a concrete design
-change; (5) verify the change before accepting it. Figure 2 shows the
+change; (5) verify the change before accepting it. Figure 4 shows the
 model at five points along the loop's 37 revisions. The K-RED retrofit
 entered at step (4) as a conventional optimization; the ψ-fold was
 noticed at step (3): once K-RED had shrunk the arithmetic, the twiddle
@@ -821,9 +852,9 @@ chip's physical fabric — is too heavy for it):
 - **Bitstream** (§6): `ntt-core/bit.sh` runs the full Vivado-free Basys-3
   flow, timing-gated (every reported clock ≥ 50 MHz).
 
-Table 8 maps the liftable deliverables.
+Table 5 maps the liftable deliverables.
 
-**Table 8. What a hardware team can lift directly.**
+**Table 5. What a hardware team can lift directly.**
 
 | deliverable | file | contract | certified by |
 |---|---|---|---|
@@ -879,6 +910,26 @@ shift-friendly ψ the derived half is multiplier-free (ψ = 7:
 $\psi \cdot ((k^F)^{-1} w[j]) = (k^F)^{-1} w[N/2+j]$, and the
 k^F-scaling butterfly restores exactly the reference transform.
 *Machine check:* `rom_fold_math.py`, `run_stream.py` (end-to-end).
+
+# Appendix B: verification obligations
+
+The detail behind Figure 2; every row is re-run by CI on each push.
+
+**Table 6. Verification obligations, methods and scopes.**
+
+| property | method | scope |
+|---|---|---|
+| K-RED unit == k^F·a·b mod q | z3, divider-free congruence | full 28-bit domain |
+| fold7 == 7·x mod q | z3, congruence | full domain (x<q) |
+| `tf_rom_fold` ≡ shipped `tf_ROM` | SymbiYosys miter | every address, any REN |
+| butterfly (NTT/INTT) == spec | SbY compositional, domain-faithful | all inputs, latency-exact |
+| own-FSM control safety (§5) | SymbiYosys k-induction, datapath stubbed | arbitrary host behaviour, both modes |
+| host load reduced mod q | k-induction assert, h_din unconstrained | all 16384 words, symbolic |
+| reset / power-up-X / single-clock | SymbiYosys + netlist audit | structural |
+| non-vacuity | 8 RTL mutations | each kills its proof |
+| full transform INTT(NTT(x))=x | iverilog simulation | random vectors, N=1024 |
+| own core NTT / INTT vs independent golden | iverilog + golden, bijectivity | multi-vector incl. raw ≥ q, fresh dumps |
+| generalization (Kyber q=3329) | exhaustive + iverilog | all z<q², generated RTL |
 
 # References
 

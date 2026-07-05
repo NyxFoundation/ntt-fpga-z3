@@ -9,7 +9,7 @@ FLAGS  = --from gfm+raw_attribute --pdf-engine=xelatex -V geometry:margin=1in -V
 # citekeys in the prose are readable markers ([cfntt], ...) resolving to
 # references.bib; convert to \cite{} in the venue LaTeX class at submission.
 
-paper.pdf: paper.md references.bib ieee/preamble.tex ieee/build.sh
+paper.pdf: paper.md references.bib ieee/preamble.tex ieee/build.sh ieee/fix_longtables.py
 	bash ieee/build.sh
 	cp ieee/paper_ieee.pdf paper.pdf
 
